@@ -66,7 +66,7 @@ The fifteen answers on [ragtime-dev#168](https://github.com/benjaminwittes/ragti
 | # | Decision | Where |
 |---|---|---|
 | 1 | Brief card as a form: goal, corpora chips ordered by drag, answer-shape presets with free text, constraint tags; Accept = Research; JSON underneath | `components/BriefCard.tsx`, `model/brief.ts` |
-| 2 | Orient and research narration stays in the conversation, faint | `model/turn.ts` (`narration`), `.narration` in `styles.css` |
+| 2 | Orient and research narration stays in the conversation, faint — and folded, see below | `model/turn.ts` (`narration`), `components/Conversation.tsx`, `.narration` in `styles.css` |
 | 3 | A clarifying question is a distinct block, composer focused, pill reads `orient · asked` | `components/Conversation.tsx`, `model/format.ts` (`phasePill`) |
 | 4 | Trail = tool calls + workspace handoffs; document handoffs are sources under the answer | `components/Trail.tsx`, `model/sources.ts` |
 | 5 | Structured per-tool summaries, typed | `ExplorerToolDetail` in `@lawfare/ragtime-client`; rendered in `Trail.tsx` |
@@ -94,7 +94,38 @@ found by reading the code and then by looking at the screen on a phone.
 | Nothing said the daily allowance is **shared**. The Meter reports this conversation's spend against its 25¢ cap; the pool the worker counts per address per day was invisible, and behind a mount that address is the mount's — so everyone the gate admits draws on one pool and the first signal was a refusal | `model/allowance.ts`, `components/Allowance.tsx`; the Meter's line now names the conversation |
 | A quota refusal told a signed-in member to *sign in to continue* — the worker's words for a visitor on the public site, and advice that would change nothing here | `model/allowance.ts` (`explainRefusal`), rewritten once in `hooks/useExplorer.ts` so the header and the turn's error block agree |
 | No way back: a full-page app inside a tenant, with the browser's Back button as the only exit | `model/home.ts`, `HOME_URL` in `config.ts` — the mount's own `VITE_BASE` says where the page was linked from; `VITE_HOME_URL` overrides |
-| One breakpoint, and under it a 390×844 phone got about **65px** of scrollable answer: the aside was pinned at 40vh and the accepted brief hangs above the conversation rather than scrolling with it | the `@media` block at the end of `styles.css` (last, deliberately) and `hooks/useNarrow.ts`; the brief and the trail collapse and are one tap from open |
+| One breakpoint, and under it a 390×844 phone got about **65px** of scrollable answer: the aside was pinned at 40vh and the accepted brief hangs above the conversation rather than scrolling with it | the `@media` block at the end of `styles.css` (last, deliberately); the aside now takes the height its content needs, and the panels that cost the answer its room start closed — everywhere, see below |
+
+## What starts closed, and why it is everywhere rather than on a phone
+
+The first shape opened everything it had. That is the right instinct for a page whose
+argument for itself is that it shows its work, and the wrong default for the screen: on a
+wide viewport an answer arrived flanked by a trail of every tool call, under a brief the
+reader had already accepted, below several paragraphs of the model narrating what it was
+about to do. The work was in front of the answer that was asked for.
+
+So four things fold, and all four are one tap from open:
+
+| Folded | Summary reads | Where |
+|---|---|---|
+| The trail | `Trail — 5 tool calls`, the count from `toolCalls` | `App.tsx`, `model/turn.ts` |
+| The narration of a turn | `2 steps` | `components/Conversation.tsx` |
+| The source list under an answer | `Sources` beside `2 of 4 cited documents read in full` | `components/Answer.tsx` |
+| The accepted brief, pinned and in the transcript | `Brief` beside the goal | `App.tsx`, `components/Conversation.tsx` |
+
+Two rules held while folding. **A summary has to say enough to be worth the tap** — a
+closed panel labelled only `Trail` says nothing about whether there is anything in it, so
+it carries the count. And **the claim the page makes about its own work does not fold**:
+the line that says how many cited documents were actually read, or that none were, is the
+summary of the sources rather than something behind it, so it reads whether or not anyone
+opens the list. What folds is the list; what stays is the claim.
+
+A **proposed** brief does not fold. It is the one card the reader has to act on, so it
+stays open until it is accepted, and folds afterwards — settled state.
+
+Because the answer is now closed on every viewport, nothing outside `styles.css` reads the
+breakpoint. `hooks/useNarrow.ts` existed only to decide these `open` attributes on a phone
+and is gone; the `@media` block keeps the layout half of the narrow fix.
 
 ## Not in the first shape
 

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 
 import { DAILY_MODEL_CALLS, HOME_LABEL, HOME_URL, HOSTED, loadSettings, saveSettings, type Settings as SettingsValue } from './config.ts'
 import { useExplorer } from './hooks/useExplorer.ts'
-import { useNarrow } from './hooks/useNarrow.ts'
 import { QUOTA_CODES, allowance } from './model/allowance.ts'
-import { conversationCost } from './model/turn.ts'
+import { plural } from './model/format.ts'
+import { conversationCost, toolCalls } from './model/turn.ts'
 import { Allowance } from './components/Allowance.tsx'
 import { BriefCard } from './components/BriefCard.tsx'
 import { Composer } from './components/Composer.tsx'
@@ -19,7 +19,6 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const x = useExplorer(settings)
-  const narrow = useNarrow()
   // Behind a mount that holds the credential the worker counts the day's model calls
   // against the mount's address, so the allowance is one pool shared by everyone the gate
   // admits (`model/allowance.ts`). On the page's own model it is the visitor's network.
@@ -29,6 +28,7 @@ export default function App() {
     shared: HOSTED,
     refusalCode: x.refusal?.code ?? null,
   })
+  const calls = toolCalls(x.turns)
   // Behind a hop the credential is the mount's, so the page asks for nothing and the
   // composer is never held shut waiting for a password nobody here has to type.
   const needsPassword = !HOSTED && !settings.password
@@ -96,7 +96,7 @@ export default function App() {
                 editable={false}
                 accepted={x.brief}
                 disabled={x.busy}
-                startOpen={!narrow}
+                startOpen={false}
                 onAccept={x.accept}
               />
             </div>
@@ -129,10 +129,15 @@ export default function App() {
           <Allowance value={pool} conversationCalls={x.totalCalls} />
           <div className="scroll">
             {/* The meter and the allowance are what a member must not have to go looking
-                for; the trail is worth its room on a wide screen and costs the answer its
-                room on a phone, so it starts closed there. */}
-            <details className="trail-panel" open={!narrow}>
-              <summary className="trail-summary">Trail — every tool call and what it cost</summary>
+                for. The trail is the page's argument that it shows its work, which is not
+                the same as the work being the first thing on the screen: opened by default
+                it is a wall of tool calls beside an answer nobody has read yet. So it
+                starts closed everywhere and says in its summary how much is behind it —
+                the count is what makes a closed panel worth a tap. */}
+            <details className="trail-panel">
+              <summary className="trail-summary">
+                Trail{calls > 0 ? ' — ' + plural(calls, 'tool call') : ' — every tool call and what it cost'}
+              </summary>
               <Trail turns={x.turns} appUrl={settings.appUrl} />
             </details>
           </div>

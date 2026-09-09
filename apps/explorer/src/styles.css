@@ -90,6 +90,11 @@ button:disabled { cursor: default; opacity: 0.55; }
 .marker { color: var(--faint); font-size: 12px; text-align: center; margin: 6px 0 10px; letter-spacing: 0.04em; }
 .narration { color: var(--faint); font-size: 14px; margin: 8px 0; }
 .narration p { margin: 0 0 4px; }
+.steps { margin: 8px 0; }
+.steps-summary { cursor: pointer; color: var(--faint); font-size: 12px; letter-spacing: 0.04em; width: fit-content; }
+.steps-summary:hover { color: var(--dim); }
+.steps[open] .steps-summary { margin-bottom: 2px; }
+.steps .narration:first-of-type { margin-top: 4px; }
 .question { border: 1px solid #f1d9b0; border-left: 4px solid var(--warn); background: var(--warn-soft); border-radius: 10px; padding: 10px 14px; margin: 10px 0; }
 .question-head { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
 .question p { margin: 0; font: 400 18px/1.4 var(--serif); }
@@ -139,8 +144,11 @@ button:disabled { cursor: default; opacity: 0.55; }
 .badge-error { background: var(--bad-soft); color: var(--bad); }
 .cost-line { color: var(--faint); font-size: 12px; margin-top: 8px; }
 .sources { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 8px; font-size: 13px; }
+.sources-summary, .sources-flat { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sources-summary { cursor: pointer; }
+.sources[open] .sources-summary { margin-bottom: 6px; }
 .sources-head { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
-.sources-state { color: var(--dim); margin: 4px 0 6px; font-style: italic; }
+.sources-state { color: var(--dim); font-style: italic; }
 .source-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 .source-list li { display: flex; gap: 8px; align-items: baseline; }
 .source-slug { color: var(--faint); font-size: 11px; }
@@ -214,13 +222,13 @@ button:disabled { cursor: default; opacity: 0.55; }
  * not anything in it needed the room, and the accepted brief hangs above the
  * conversation rather than scrolling with it, so its height comes straight out of
  * the answer's. Together they left a 390×844 phone about 65px of scrollable
- * answer — the answer being the whole point of the page. So the two panels that
- * are optional (the brief's detail, the trail) collapse here and are one tap from
- * open, and the aside takes the height its content actually needs.
+ * answer — the answer being the whole point of the page. What is left here is
+ * the layout half of that fix: the aside takes the height its content needs.
  *
- * `hooks/useNarrow.ts` reads this same query to decide whether those two start
- * open, because `open` is an attribute and CSS cannot set it. The two have to
- * agree; changing one means changing the other. */
+ * The other half used to be a React hook reading this same query, so the brief and
+ * the trail could start closed on a phone and open on a desk. They start closed on
+ * both now, so nothing outside this file reads the breakpoint and there is no
+ * second copy of it to keep in step. */
 @media (max-width: 900px) {
   .main { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
   .left { border-right: 0; }

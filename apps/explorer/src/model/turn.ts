@@ -221,6 +221,18 @@ function round4(n: number): number {
   return Math.round(n * 10000) / 10000
 }
 
+/**
+ * Every tool call the conversation has made. The trail starts closed, so its summary
+ * is the only thing a member reads until they open it; a count is what tells them
+ * whether there is work in there worth the tap. Tool calls, not the model calls the
+ * meter counts — the trail is a list of the former.
+ */
+export function toolCalls(turns: Turn[]): number {
+  let n = 0
+  for (const turn of turns) for (const round of turn.rounds) n += round.calls.length
+  return n
+}
+
 /** Whether the turn's wall clock is known. */
 export function elapsedMs(turn: Turn, now: number): number {
   return (turn.endedAt ?? now) - turn.startedAt

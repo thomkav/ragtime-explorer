@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import type { ExplorerBrief, ExplorerEvent } from '@lawfare/ragtime-client'
-import { applyEvent, lastCost, newTurn, roundCosts, type Turn } from './turn.ts'
+import { applyEvent, lastCost, newTurn, roundCosts, toolCalls, type Turn } from './turn.ts'
 import { knownTitles, sourcesOf, workspaceHandoffs } from './sources.ts'
 import { costLine, phasePill, stopBadge, workingLabel } from './format.ts'
 
@@ -219,6 +219,16 @@ test('the stop badge names the cap that ended the turn', () => {
   ])
   assert.equal(t.answer, 'Answer from what I have.')
   assert.equal(stopBadge(t.stop)?.tone, 'limit')
+})
+
+test('the trail summary counts tool calls across the conversation, not model calls', () => {
+  const orient = fold(newTurn(1, 'orient', 'emergency powers?', 'ask', 1000), orientEvents)
+  const research = fold(newTurn(2, 'research', '', 'accept', 3000), researchEvents, 3000)
+  assert.equal(toolCalls([]), 0)
+  // Two tool calls in orient (the search and propose_brief), whatever `done` said about model calls.
+  assert.equal(orient.calls, 3)
+  assert.equal(toolCalls([orient]), 2)
+  assert.equal(toolCalls([orient, research]), 2 + research.rounds.reduce((n, r) => n + r.calls.length, 0))
 })
 
 test('a result whose call was never seen is kept in its round', () => {

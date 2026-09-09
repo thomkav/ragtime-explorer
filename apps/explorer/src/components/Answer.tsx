@@ -98,43 +98,63 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
       {body}
       {badge && <div className={'badge badge-' + badge.tone}>{badge.text}</div>}
       <div className="cost-line">{costLine(turn, now)}</div>
-      {turn.phase === 'research' && (report.sources.length > 0 || report.readUncited.length > 0 || turn.answer) && (
-        <div className="sources">
-          <div className="sources-head">Sources</div>
-          {report.searchOnly && <div className="sources-state">Answered from search results; no document was read in full.</div>}
-          {!report.searchOnly && report.sources.length > 0 && (
-            <div className="sources-state">
-              {report.readCount} of {report.sources.length} cited {report.sources.length === 1 ? 'document' : 'documents'} read in full
-            </div>
-          )}
-          {report.sources.length > 0 && (
-            <ul className="source-list">
-              {report.sources.map((s) => (
-                <li key={s.slug + '/' + s.id} className={s.read ? 'read' : 'seen'}>
-                  <span className={'tag ' + (s.read ? 'tag-read' : 'tag-seen')}>{s.read ? 'read' : 'from search'}</span>
-                  <a href={onApp(appUrl, s.path)} target="_blank" rel="noreferrer noopener">
-                    {s.title}
-                  </a>
-                  <span className="source-slug">{s.slug}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {report.readUncited.length > 0 && (
-            <div className="sources-extra">
-              Also read, not cited:{' '}
-              {report.readUncited.map((s, i) => (
-                <span key={s.slug + '/' + s.id}>
-                  {i > 0 && ', '}
-                  <a href={onApp(appUrl, s.path)} target="_blank" rel="noreferrer noopener">
-                    {s.title}
-                  </a>
-                </span>
-              ))}
-            </div>
-          )}
+      {turn.phase === 'research' && (report.sources.length > 0 || report.readUncited.length > 0 || turn.answer) && <Sources report={report} appUrl={appUrl} />}
+    </div>
+  )
+}
+
+
+/**
+ * The sources under an answer (item 12), folded. What must not be behind a tap is the
+ * claim the page makes about its own work — how many cited documents were actually read,
+ * or that none were — so that line is the summary and reads whether or not anyone opens
+ * it. The list of documents is the detail, and it is the part that ran to a screenful.
+ * With nothing to list there is nothing to open, so it renders flat rather than offering
+ * an empty disclosure.
+ */
+function Sources({ report, appUrl }: { report: ReturnType<typeof sourcesOf>; appUrl: string }) {
+  const state = report.searchOnly
+    ? 'Answered from search results; no document was read in full.'
+    : report.sources.length > 0
+      ? `${report.readCount} of ${report.sources.length} cited ${report.sources.length === 1 ? 'document' : 'documents'} read in full`
+      : ''
+  const head = (
+    <>
+      <span className="sources-head">Sources</span>
+      {state && <span className="sources-state">{state}</span>}
+    </>
+  )
+  if (!report.sources.length && !report.readUncited.length) return <div className="sources sources-flat">{head}</div>
+
+  return (
+    <details className="sources">
+      <summary className="sources-summary">{head}</summary>
+      {report.sources.length > 0 && (
+        <ul className="source-list">
+          {report.sources.map((s) => (
+            <li key={s.slug + '/' + s.id} className={s.read ? 'read' : 'seen'}>
+              <span className={'tag ' + (s.read ? 'tag-read' : 'tag-seen')}>{s.read ? 'read' : 'from search'}</span>
+              <a href={onApp(appUrl, s.path)} target="_blank" rel="noreferrer noopener">
+                {s.title}
+              </a>
+              <span className="source-slug">{s.slug}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {report.readUncited.length > 0 && (
+        <div className="sources-extra">
+          Also read, not cited:{' '}
+          {report.readUncited.map((s, i) => (
+            <span key={s.slug + '/' + s.id}>
+              {i > 0 && ', '}
+              <a href={onApp(appUrl, s.path)} target="_blank" rel="noreferrer noopener">
+                {s.title}
+              </a>
+            </span>
+          ))}
         </div>
       )}
-    </div>
+    </details>
   )
 }

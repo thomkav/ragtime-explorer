@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { CorpusRegistry, ExplorerBrief } from '@lawfare/ragtime-client'
 
-import { phasePill, workingLabel } from '../model/format.ts'
+import { phasePill, plural, workingLabel } from '../model/format.ts'
 import type { Turn } from '../model/turn.ts'
 import { Answer } from './Answer.tsx'
 import { BriefCard } from './BriefCard.tsx'
@@ -39,9 +39,19 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
               <div className={'bubble user' + (turn.promptKind === 'reply' ? ' reply' : '')}>{turn.prompt}</div>
             )}
 
-            {turn.narration.map((n, j) => (
-              <Markdown key={j} text={n} appUrl={appUrl} className="narration" />
-            ))}
+            {/* Item 2 put the model's narration in the conversation, faint. Faint is not
+                the same as out of the way: on a research turn it is several paragraphs of
+                the model talking about what it is about to do, above the answer that was
+                asked for. So the steps fold into one line and open on a tap — the answer
+                is what the page is for, and the work is one gesture behind it. */}
+            {turn.narration.length > 0 && (
+              <details className="steps">
+                <summary className="steps-summary">{plural(turn.narration.length, 'step')}</summary>
+                {turn.narration.map((n, j) => (
+                  <Markdown key={j} text={n} appUrl={appUrl} className="narration" />
+                ))}
+              </details>
+            )}
 
             {turn.question && (
               <div className="question" role="group" aria-label="Clarifying question">
@@ -60,6 +70,7 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
                 editable={isLast && !brief}
                 accepted={!isLast || brief ? brief : null}
                 disabled={busy}
+                startOpen={false}
                 onAccept={onAccept}
               />
             )}
