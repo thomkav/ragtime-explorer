@@ -3,6 +3,10 @@
 The one owner of the connection to the RAGtime worker for the browser UXs. Framework-free:
 `fetch` is the only platform call. React glue stays per app.
 
+Install: `npm install @ragtime/client`. Published from `packages/client` of
+[thomkav/ragtime-explorer](https://github.com/thomkav/ragtime-explorer) under MIT; ES module only,
+types included.
+
 ```ts
 import { createClient } from '@ragtime/client'
 
