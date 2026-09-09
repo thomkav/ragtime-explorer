@@ -10,12 +10,14 @@ worker endpoint it talks to, `POST /explorer/turn`, is in `benjaminwittes/ragtim
 | Path | What | Status |
 |---|---|---|
 | `packages/client` | `@ragtime/client` — the worker connection, the Explorer turn stream, the registry, the deep-link grammar | lifted from the public frontend; `tsc --strict` and tests green |
-| `apps/explorer` | the Explorer page | not started; begins from the mock |
+| `apps/explorer` | the Explorer page — React + Vite on the client package | first shape from the fifteen design answers on #168; `tsc`, model tests and `vite build` green; not yet driven in a browser by a person |
 
 ```sh
 npm install
 npm run check      # every workspace
 npm test           # every workspace; no network
+npm run build      # the client package to dist/, then the page
+npm run dev -w ragtime-explorer-app   # the page on http://localhost:8820
 ```
 
 Node 22.18 or later. The client package's README says how to run its one live test against an

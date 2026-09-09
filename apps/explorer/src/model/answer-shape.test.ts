@@ -1,0 +1,79 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+
+import { citationsIn, detectShape, firstCitation, firstNumber, splitListAnswer } from './answer-shape.ts'
+import { cents, seconds } from './format.ts'
+import { briefJson, mergePinnedCorpora, moveCorpus, normalizeBrief, sameBrief } from './brief.ts'
+
+test('the answer shape presets are detected from free text, narrative by default', () => {
+  assert.equal(detectShape('a list of the opinions with dates'), 'list')
+  assert.equal(detectShape('A numbered list'), 'list')
+  assert.equal(detectShape('a count of the orders'), 'count')
+  assert.equal(detectShape('how many cases'), 'count')
+  assert.equal(detectShape('the one document that answers this'), 'document')
+  assert.equal(detectShape('a short narrative with citations'), 'narrative')
+  assert.equal(detectShape(''), 'narrative')
+  assert.equal(detectShape(undefined), 'narrative')
+})
+
+const listAnswer = [
+  'Three OLC opinions speak to emergency powers over communications:',
+  '',
+  '1. [Legal Authorities Available to the President](rt://olc/867) — the 1979 survey of statutory authorities, including §706 of the Communications Act.',
+  '2. **Emergency Statutes That Do Not Require a Declaration** [opinion](rt://olc/112): lists §706 among statutes exercisable without a declared emergency.',
+  '   It was reaffirmed in 2001.',
+  '3. A memorandum with no citation available in the corpus.',
+  '',
+  'None addresses internet traffic specifically.',
+].join('\n')
+
+test('a list answer splits into a lead, one card per item titled by its citation, and the rest', () => {
+  const r = splitListAnswer(listAnswer)
+  assert.equal(r.lead, 'Three OLC opinions speak to emergency powers over communications:')
+  assert.equal(r.cards.length, 3)
+  assert.equal(r.cards[0]?.title, 'Legal Authorities Available to the President')
+  assert.equal(r.cards[0]?.path, '/corpus/olc/867')
+  assert.match(r.cards[0]?.body ?? '', /^the 1979 survey/)
+  assert.equal(r.cards[1]?.title, 'opinion')
+  assert.equal(r.cards[1]?.path, '/corpus/olc/112')
+  assert.match(r.cards[1]?.body ?? '', /reaffirmed in 2001/)
+  assert.equal(r.cards[2]?.path, null)
+  assert.match(r.cards[2]?.title ?? '', /^A memorandum/)
+  assert.equal(r.rest, 'None addresses internet traffic specifically.')
+})
+
+test('prose with fewer than two items is not a list: no cards, the whole text is the lead', () => {
+  const r = splitListAnswer('Only one thing to say: [X](rt://olc/1) covers it.\n\n- a lone bullet')
+  assert.equal(r.cards.length, 0)
+  assert.match(r.lead, /^Only one thing/)
+})
+
+test('citations are read through the one resolver; the first number ignores ids', () => {
+  const c = citationsIn('see [A](rt://olc/867) and [B](rt://congress:hearings/CHRG-1) and [not one](https://x.y/z)')
+  assert.deepEqual(c.map((x) => [x.slug, x.id, x.path]), [['olc', '867', '/corpus/olc/867'], ['congress:hearings', 'CHRG-1', '/corpus/congress:hearings/CHRG-1']])
+  assert.equal(firstCitation('nothing here'), null)
+  assert.equal(firstNumber('There are 1,204 orders since [EO 14000](rt://presidential/13087).'), '1,204')
+  assert.equal(firstNumber('Fourteen orders, per [the list](rt://presidential/13087).'), null)
+  assert.equal(firstNumber('About 14 orders cite it.'), '14')
+})
+
+test('cents read with one decimal and never dollars; seconds round', () => {
+  assert.equal(cents(10.28), '10.3¢')
+  assert.equal(cents(0.9458), '0.9¢')
+  assert.equal(cents(4), '4¢')
+  assert.equal(cents(0.02), '<0.1¢')
+  assert.equal(cents(0), '0¢')
+  assert.equal(seconds(31900), '32 s')
+  assert.equal(seconds(800), '0.8 s')
+})
+
+test('a brief normalizes, pins the empty-state corpora first, and knows when it changed', () => {
+  const b = normalizeBrief({ goal: ' Find them ', corpora: ['olc', 'olc', ' presidential '], answer_shape: ' a list ', constraints: [' 2025 ', ''] })
+  assert.deepEqual(b, { goal: 'Find them', corpora: ['olc', 'presidential'], answer_shape: 'a list', constraints: ['2025'] })
+  assert.deepEqual(mergePinnedCorpora(b, ['usc', 'olc']).corpora, ['usc', 'olc', 'presidential'])
+  assert.equal(sameBrief(b, { ...b, constraints: ['2025'] }), true)
+  assert.equal(sameBrief(b, { ...b, goal: 'Find those' }), false)
+  assert.match(briefJson(b), /"goal": "Find them"/)
+  assert.deepEqual(moveCorpus(['a', 'b', 'c'], 2, 0), ['c', 'a', 'b'])
+  assert.deepEqual(moveCorpus(['a', 'b', 'c'], 0, 5), ['a', 'b', 'c'])
+})
