@@ -1,9 +1,9 @@
 import { cents } from '../model/format.ts'
-import { lastCost, type Turn } from '../model/turn.ts'
+import { conversationCost, type Turn } from '../model/turn.ts'
 
 /** The conversation meter (design item 6): spend against the cap, steps, model calls, turns. */
 export function Meter({ turns, phase, totalCalls }: { turns: Turn[]; phase: string; totalCalls: number }) {
-  const last = [...turns].reverse().map(lastCost).find((c) => c !== null) ?? null
+  const last = conversationCost(turns)
   const spend = last ? last.conversation_spend : 0
   const cap = last ? last.cap_cents : 25
   const pct = Math.min(100, (100 * spend) / cap)
@@ -11,8 +11,10 @@ export function Meter({ turns, phase, totalCalls }: { turns: Turn[]; phase: stri
     <div className="meter">
       <div className="meter-line">
         <span className="pill">{phase}</span>
+        {/* Named, because the number beside it is the conversation's and not the day's:
+            the daily allowance is a separate pool, and the Allowance panel shows it. */}
         <span>
-          spend <b>{cents(spend)}</b> of <b>{cap}¢</b>
+          this conversation <b>{cents(spend)}</b> of <b>{cap}¢</b>
         </span>
         {last && (
           <span>

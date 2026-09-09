@@ -165,6 +165,20 @@ export function lastCost(turn: Turn): ExplorerCostEvent | null {
 }
 
 /**
+ * The most recent `cost` event of the whole conversation, which is where the running
+ * totals live: the conversation's spend against its cap, and the day's model calls
+ * against the allowance. A turn that was refused before the stream opened carries none,
+ * so this looks back past it rather than reading zero.
+ */
+export function conversationCost(turns: Turn[]): ExplorerCostEvent | null {
+  for (let i = turns.length - 1; i >= 0; i--) {
+    const c = lastCost(turns[i]!)
+    if (c) return c
+  }
+  return null
+}
+
+/**
  * Cents each round added to the turn (item 6: per-call cost only in the trail,
  * and a round's parallel results coalesce to one line). The `cost` events
  * after a round's results all carry the same `turn_cents`, so a round's cost

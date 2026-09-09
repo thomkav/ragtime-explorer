@@ -1,5 +1,7 @@
 import { DEFAULT_WORKER_URL } from '@lawfare/ragtime-client'
 
+import { parentPath } from './model/home.ts'
+
 export const DEFAULT_APP_URL = 'https://ragtime.lawfaremedia.org'
 
 export type Settings = {
@@ -21,6 +23,28 @@ export const TURN_URL = ((import.meta.env.VITE_TURN_URL as string | undefined) |
 
 /** Whether a hop holds the credential, which is the one thing that decides. */
 export const HOSTED = TURN_URL !== ''
+
+/**
+ * The daily allowance on model calls for a caller without a paid account:
+ * `IP_DAILY_MODEL_CALLS` in the worker's `explorer.js`, counted per address per UTC day.
+ *
+ * Stated here so the page can say what the limit is before a turn has told it. A `cost`
+ * event carrying `ip_cap` supersedes it, and is the number to believe; this one only has
+ * to be right on the first screen a member sees. If the worker's constant moves, this
+ * follows it.
+ */
+export const DAILY_MODEL_CALLS = 60
+
+/**
+ * Where the link out of the page goes, and what it is called. Empty means the page is the
+ * whole site and wears no such link — the default off a mount, and always true of the
+ * page's own model. See `model/home.ts` for why the mount's base answers this.
+ */
+export const HOME_URL =
+  ((import.meta.env.VITE_HOME_URL as string | undefined) || '').trim() ||
+  (HOSTED ? parentPath((import.meta.env.BASE_URL as string | undefined) || '/') : '')
+
+export const HOME_LABEL = ((import.meta.env.VITE_HOME_LABEL as string | undefined) || '').trim() || 'RAGtime'
 
 const KEY = 'ragtime-explorer.settings'
 

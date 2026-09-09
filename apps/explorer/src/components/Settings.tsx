@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { HOSTED, type Settings as SettingsValue } from '../config.ts'
+import { DAILY_MODEL_CALLS, HOSTED, type Settings as SettingsValue } from '../config.ts'
 
 type Props = {
   open: boolean
@@ -33,19 +33,27 @@ export function Settings({ open, value, onSave, onClose }: Props) {
       >
         <h3>Settings</h3>
         {HOSTED ? (
-          <p className="hint">This Explorer is served behind a sign-in, and the credential is the server's — there is nothing to paste.</p>
+          <p className="hint">
+            This Explorer is served behind a sign-in, and the credential is the server's — there is nothing to paste. Every turn goes to the
+            server, which spends the shared daily allowance shown beside the trail.
+          </p>
         ) : (
           <label className="field">
             <span className="label">Explorer password</span>
             <input type="password" value={draft.password} onChange={(e) => setDraft({ ...draft, password: e.target.value })} placeholder="paste once" autoComplete="off" />
-            <span className="hint">Kept in this tab only. Sixty model calls a day per network without it.</span>
+            <span className="hint">Kept in this tab only. {DAILY_MODEL_CALLS} model calls a day per network without it.</span>
           </label>
         )}
-        <label className="field">
-          <span className="label">Worker</span>
-          <input value={draft.workerUrl} onChange={(e) => setDraft({ ...draft, workerUrl: e.target.value })} spellCheck={false} />
-          <span className="hint">A local wrangler dev is http://127.0.0.1:8787</span>
-        </label>
+        {/* Only the page's own model reaches the worker directly. Behind a hop every turn
+            goes to the mount (`hooks/useExplorer.ts`), which is the sole caller of the
+            client, so this field would take an edit, save it, and change nothing. */}
+        {!HOSTED && (
+          <label className="field">
+            <span className="label">Worker</span>
+            <input value={draft.workerUrl} onChange={(e) => setDraft({ ...draft, workerUrl: e.target.value })} spellCheck={false} />
+            <span className="hint">A local wrangler dev is http://127.0.0.1:8787</span>
+          </label>
+        )}
         <label className="field">
           <span className="label">Links open on</span>
           <input value={draft.appUrl} onChange={(e) => setDraft({ ...draft, appUrl: e.target.value })} spellCheck={false} />

@@ -36,6 +36,8 @@ button:disabled { cursor: default; opacity: 0.55; }
 .beta { font-weight: 400; color: var(--dim); font-size: 12px; margin-left: 4px; }
 .grow { flex: 1; }
 .refusal { color: var(--bad); font-size: 13px; }
+.home { font-size: 13px; text-decoration: none; white-space: nowrap; }
+.home:hover { text-decoration: underline; }
 
 .main { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, 1fr); flex: 1; min-height: 0; }
 .left, .right { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
@@ -43,11 +45,7 @@ button:disabled { cursor: default; opacity: 0.55; }
 .scroll { flex: 1; overflow: auto; min-height: 0; }
 .left .scroll { padding: 18px 20px; }
 .right .scroll { padding: 10px 14px; font-size: 13px; }
-@media (max-width: 900px) {
-  .main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-  .left { border-right: 0; }
-  .right { border-top: 1px solid var(--line); max-height: 40vh; }
-}
+/* The narrow layout is one block at the end of this file — see there. */
 
 /* Buttons and chips */
 .primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 8px; padding: 8px 14px; }
@@ -111,6 +109,11 @@ button:disabled { cursor: default; opacity: 0.55; }
 .brief-json pre { font: 12px/1.4 var(--mono); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 8px; overflow: auto; margin: 6px 0 0; }
 .brief-bar { padding: 10px 20px 0; }
 .brief-bar .brief { margin: 0; }
+.brief-summary { cursor: pointer; }
+.brief-summary .brief-title { margin-right: 8px; }
+.brief-goal-line { color: var(--dim); }
+.brief-compact[open] .brief-goal-line { display: none; }
+.brief-compact[open] .brief-summary { margin-bottom: 2px; }
 
 /* Answer */
 .answer { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 14px 18px; margin: 10px 0; }
@@ -157,6 +160,17 @@ button:disabled { cursor: default; opacity: 0.55; }
 .bar { height: 6px; background: #eeece7; border-radius: 3px; margin-top: 6px; overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
 .bar i.hot { background: var(--bad); }
+
+/* The daily allowance, beside the conversation's own meter — the pool a member could not
+ * see before, and the one that is shared behind a gated mount. */
+.allowance { padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--card); font-size: 13px; }
+.allowance-line { color: var(--ink); }
+.allowance .hint { display: block; margin-top: 4px; }
+.allowance.spent { background: var(--bad-soft); border-color: #efc4c4; }
+.allowance.spent .allowance-line { color: var(--bad); font-weight: 700; }
+.allowance.spent .hint { color: var(--bad); }
+
+.trail-panel > summary { cursor: pointer; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
 .trail-empty { color: var(--dim); padding: 10px 4px; }
 .trail-turn { margin-bottom: 14px; }
 .trail-head { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin: 6px 0; }
@@ -188,3 +202,42 @@ button:disabled { cursor: default; opacity: 0.55; }
 .settings { border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; width: min(480px, 92vw); }
 .settings::backdrop { background: rgba(0, 0, 0, 0.25); }
 .settings h3 { margin: 0 0 8px; }
+
+/* ── Narrow: one breakpoint, and it goes last ───────────────────────────────
+ *
+ * Last because a media query adds no specificity: `.meter { font-size: 13px }`
+ * further down the file beats `.meter { font-size: 12px }` inside a query further
+ * up, silently, and the rule looks right while doing nothing. Everything that
+ * overrides a rule above has to sit below it.
+ *
+ * What was wrong with the narrow layout: the aside was pinned at 40vh whether or
+ * not anything in it needed the room, and the accepted brief hangs above the
+ * conversation rather than scrolling with it, so its height comes straight out of
+ * the answer's. Together they left a 390×844 phone about 65px of scrollable
+ * answer — the answer being the whole point of the page. So the two panels that
+ * are optional (the brief's detail, the trail) collapse here and are one tap from
+ * open, and the aside takes the height its content actually needs.
+ *
+ * `hooks/useNarrow.ts` reads this same query to decide whether those two start
+ * open, because `open` is an attribute and CSS cannot set it. The two have to
+ * agree; changing one means changing the other. */
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .left { border-right: 0; }
+  .right { border-top: 1px solid var(--line); max-height: 60vh; }
+  .top { padding: 8px 12px; gap: 8px; row-gap: 6px; }
+  .top h1 { font-size: 16px; }
+  .top .pill { display: none; }         /* the meter below carries the phase */
+  .left .scroll { padding: 14px; }
+  .composer { padding: 10px 12px; }
+  .brief-bar { padding: 8px 14px 0; }
+  .bubble.user { margin-left: 6%; }
+  .bubble.user.reply { margin-left: 14%; }
+  .meter { padding: 8px 12px; font-size: 12px; }
+  .meter-line { gap: 4px 10px; }
+  .allowance { padding: 8px 12px; }
+  /* A goal is one sentence but not always a short one, and the collapsed brief has to
+     cost the same two lines whatever it says — otherwise a long goal takes the room
+     back and the fix only holds for the examples it was tested on. */
+  .brief-goal-line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+}

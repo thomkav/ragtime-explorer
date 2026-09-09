@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 
-import { HOSTED, loadSettings, saveSettings, type Settings as SettingsValue } from './config.ts'
+import { DAILY_MODEL_CALLS, HOME_LABEL, HOME_URL, HOSTED, loadSettings, saveSettings, type Settings as SettingsValue } from './config.ts'
 import { useExplorer } from './hooks/useExplorer.ts'
+import { useNarrow } from './hooks/useNarrow.ts'
+import { QUOTA_CODES, allowance } from './model/allowance.ts'
+import { conversationCost } from './model/turn.ts'
+import { Allowance } from './components/Allowance.tsx'
 import { BriefCard } from './components/BriefCard.tsx'
 import { Composer } from './components/Composer.tsx'
 import { Conversation } from './components/Conversation.tsx'
@@ -15,6 +19,16 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const x = useExplorer(settings)
+  const narrow = useNarrow()
+  // Behind a mount that holds the credential the worker counts the day's model calls
+  // against the mount's address, so the allowance is one pool shared by everyone the gate
+  // admits (`model/allowance.ts`). On the page's own model it is the visitor's network.
+  const pool = allowance({
+    cost: conversationCost(x.turns),
+    fallbackCap: DAILY_MODEL_CALLS,
+    shared: HOSTED,
+    refusalCode: x.refusal?.code ?? null,
+  })
   // Behind a hop the credential is the mount's, so the page asks for nothing and the
   // composer is never held shut waiting for a password nobody here has to type.
   const needsPassword = !HOSTED && !settings.password
@@ -41,12 +55,25 @@ export default function App() {
   return (
     <div className="app">
       <header className="top">
+        {/* A full-page app inside a tenant needs a door back to the page that linked to
+            it; without one the browser's Back button is the only exit (`model/home.ts`).
+            Empty off a mount, where the Explorer is the whole site. */}
+        {HOME_URL && (
+          <a className="home" href={HOME_URL}>
+            ← {HOME_LABEL}
+          </a>
+        )}
         <h1>
           RAGtime Explorer <span className="beta">beta</span>
         </h1>
         <span className="pill">{x.phase}</span>
         <span className="grow" />
-        {x.refusal && x.refusal.code !== 'cap_cents' && (
+        {/* A refusal the page already renders somewhere it is being looked at is not worth
+            a third copy in the header: the conversation cap wears a badge on the answer,
+            and an exhausted allowance turns the Allowance panel red and stops the turn
+            with its own error block. What is left — no credential, a bad envelope, a
+            network that dropped — has nowhere else to appear. */}
+        {x.refusal && x.refusal.code !== 'cap_cents' && !QUOTA_CODES.has(x.refusal.code ?? '') && (
           <span className="refusal" role="alert">
             {x.refusal.message}
           </span>
@@ -63,7 +90,15 @@ export default function App() {
         <section className="left">
           {x.brief && (
             <div className="brief-bar">
-              <BriefCard brief={x.brief} registry={x.registry} editable={false} accepted={x.brief} disabled={x.busy} onAccept={x.accept} />
+              <BriefCard
+                brief={x.brief}
+                registry={x.registry}
+                editable={false}
+                accepted={x.brief}
+                disabled={x.busy}
+                startOpen={!narrow}
+                onAccept={x.accept}
+              />
             </div>
           )}
           <div className="scroll">
@@ -91,8 +126,15 @@ export default function App() {
         </section>
         <aside className="right">
           <Meter turns={x.turns} phase={x.phase} totalCalls={x.totalCalls} />
+          <Allowance value={pool} conversationCalls={x.totalCalls} />
           <div className="scroll">
-            <Trail turns={x.turns} appUrl={settings.appUrl} />
+            {/* The meter and the allowance are what a member must not have to go looking
+                for; the trail is worth its room on a wide screen and costs the answer its
+                room on a phone, so it starts closed there. */}
+            <details className="trail-panel" open={!narrow}>
+              <summary className="trail-summary">Trail — every tool call and what it cost</summary>
+              <Trail turns={x.turns} appUrl={settings.appUrl} />
+            </details>
           </div>
         </aside>
       </main>
