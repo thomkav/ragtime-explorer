@@ -3,7 +3,7 @@ import type { ExplorerBrief } from '@ragtime/client'
 import { onApp } from '../config.ts'
 import { detectShape, firstCitation, firstNumber, splitListAnswer } from '../model/answer-shape.ts'
 import { costLine, stopBadge } from '../model/format.ts'
-import { sourcesOf, workspaceHandoffs } from '../model/sources.ts'
+import { knownTitles, sourcesOf, workspaceHandoffs } from '../model/sources.ts'
 import type { Turn } from '../model/turn.ts'
 import { Markdown } from './Markdown.tsx'
 
@@ -28,13 +28,14 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
   const badge = stopBadge(turn.stop)
   const report = sourcesOf(turn, priorTurns)
   const workspaces = workspaceHandoffs(turn)
+  const titles = knownTitles(turn, priorTurns)
 
   let body: React.ReactNode
   if (shape === 'list') {
     const split = splitListAnswer(turn.answer)
     body = split.cards.length ? (
       <>
-        {split.lead && <Markdown text={split.lead} appUrl={appUrl} />}
+        {split.lead && <Markdown text={split.lead} appUrl={appUrl} titles={titles} />}
         <ol className="cards">
           {split.cards.map((c, i) => (
             <li key={i} className="card">
@@ -47,14 +48,14 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
                   c.title
                 )}
               </div>
-              {c.body && <Markdown text={c.body} appUrl={appUrl} className="card-body" />}
+              {c.body && <Markdown text={c.body} appUrl={appUrl} className="card-body" titles={titles} />}
             </li>
           ))}
         </ol>
-        {split.rest && <Markdown text={split.rest} appUrl={appUrl} />}
+        {split.rest && <Markdown text={split.rest} appUrl={appUrl} titles={titles} />}
       </>
     ) : (
-      <Markdown text={turn.answer} appUrl={appUrl} />
+      <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
     )
   } else if (shape === 'count') {
     const n = firstNumber(turn.answer)
@@ -71,7 +72,7 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
             )}
           </div>
         )}
-        <Markdown text={turn.answer} appUrl={appUrl} />
+        <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
       </>
     )
   } else if (shape === 'document') {
@@ -80,14 +81,14 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
       <>
         {c && (
           <a className="document-open" href={onApp(appUrl, c.path)} target="_blank" rel="noreferrer noopener">
-            Open {c.title} ↗
+            Open {titles.get(c.path) ?? c.title} ↗
           </a>
         )}
-        <Markdown text={turn.answer} appUrl={appUrl} />
+        <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
       </>
     )
   } else {
-    body = <Markdown text={turn.answer} appUrl={appUrl} />
+    body = <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
   }
 
   return (

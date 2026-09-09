@@ -7,6 +7,7 @@
  */
 
 import { links, type ExplorerHandoffEvent } from '@ragtime/client'
+import { isCitationToken, titlesIn } from './answer-shape.ts'
 import type { Turn } from './turn.ts'
 
 export type Source = {
@@ -51,6 +52,47 @@ export function readDocuments(turns: readonly Turn[]): Map<string, string> {
   return out
 }
 
+/**
+ * `slug/id` → title for every document a tool result named: a search hit's
+ * top titles, a fetch's titles in either mode. What the page falls back on
+ * when a citation's link text is the citation itself.
+ */
+export function titleIndex(turns: readonly Turn[]): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const turn of turns) {
+    for (const round of turn.rounds) {
+      for (const call of round.calls) {
+        const d = call.result?.detail
+        if (!d) continue
+        if (d.kind === 'search') {
+          for (const h of d.hits) for (const t of h.top) if (t.id !== null && t.title) out.set(key(h.corpus, t.id), t.title)
+        } else if (d.kind === 'documents') {
+          const slug = d.corpus ?? (typeof call.input.corpus === 'string' ? call.input.corpus : null)
+          if (!slug) continue
+          for (const doc of d.documents) if (doc.id !== null && !doc.error && doc.title) out.set(key(slug, doc.id), doc.title)
+        }
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * Document path → the best title the conversation knows for it: the answer's
+ * own (a titled citation, or the bold run beside a token one), else the
+ * trail's. For the markdown renderer, so a link whose text is `rt://olc/1425`
+ * can show the title instead.
+ */
+export function knownTitles(turn: Turn, priorTurns: readonly Turn[] = []): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const [k, title] of titleIndex(priorTurns.concat(turn))) {
+    const slash = k.indexOf('/')
+    out.set(links.document({ slug: k.slice(0, slash), id: k.slice(slash + 1) }), title)
+  }
+  for (const [path, title] of titlesIn(turn.answer)) out.set(path, title)
+  return out
+}
+
 /** Whether any full-mode fetch happened in these turns, even one that failed. */
 export function anyFullRead(turns: readonly Turn[]): boolean {
   return turns.some((t) =>
@@ -63,6 +105,7 @@ export function anyFullRead(turns: readonly Turn[]): boolean {
 export function sourcesOf(turn: Turn, priorTurns: readonly Turn[] = []): SourceReport {
   const scope = priorTurns.concat(turn)
   const read = readDocuments(scope)
+  const known = knownTitles(turn, priorTurns)
   const seen = new Set<string>()
   const sources: Source[] = []
   for (const h of turn.handoffs) {
@@ -72,7 +115,10 @@ export function sourcesOf(turn: Turn, priorTurns: readonly Turn[] = []): SourceR
     const k = key(parsed.slug, parsed.id)
     if (seen.has(k)) continue
     seen.add(k)
-    sources.push({ slug: parsed.slug, id: parsed.id, title: h.label || k, path: h.url, read: read.has(k) })
+    // The worker labels a document handoff with the citation's link text; when that is the citation itself, look the title up.
+    const label = (h.label ?? '').trim()
+    const title = label && !isCitationToken(label, { slug: parsed.slug, id: parsed.id }) ? label : (known.get(h.url) ?? k)
+    sources.push({ slug: parsed.slug, id: parsed.id, title, path: h.url, read: read.has(k) })
   }
   const readCount = sources.filter((s) => s.read).length
   const readThisTurn = readDocuments([turn])

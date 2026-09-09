@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { citationsIn, detectShape, firstCitation, firstNumber, splitListAnswer } from './answer-shape.ts'
+import { citationsIn, detectShape, firstCitation, firstNumber, isCitationToken, splitListAnswer, titlesIn } from './answer-shape.ts'
 import { cents, seconds } from './format.ts'
 import { briefJson, mergePinnedCorpora, moveCorpus, normalizeBrief, sameBrief } from './brief.ts'
 
@@ -40,6 +40,43 @@ test('a list answer splits into a lead, one card per item titled by its citation
   assert.equal(r.cards[2]?.path, null)
   assert.match(r.cards[2]?.title ?? '', /^A memorandum/)
   assert.equal(r.rest, 'None addresses internet traffic specifically.')
+})
+
+// The shape the research model actually wrote on 2026-09-09: bold title, date,
+// then the citation as its own link text, against the prompt's [title](rt://…).
+const tokenListAnswer = [
+  'Four opinions:',
+  '',
+  '1. **Presidential Control of Wireless and Cable Information** — June 19, 1941 — [rt://olc/1425](rt://olc/1425). Concludes the President may control radio stations.',
+  '2. **Executive Powers Available By Virtue Of The National Emergency** — July 18, 1961 — [rt://olc/2100](rt://olc/2100).',
+  '3. [rt://olc/112](rt://olc/112) — a survey of emergency statutes.',
+  '',
+  'Adjacent: **Review of STELLAR WIND** — June 22, 2004 — [rt://olc/1466](rt://olc/1466)',
+].join('\n')
+
+test('a citation that is its own link text: the card is titled by the bold run, the body loses the dangling dash, the title map reads the answer', () => {
+  const r = splitListAnswer(tokenListAnswer)
+  assert.equal(r.cards.length, 3)
+  assert.equal(r.cards[0]?.title, 'Presidential Control of Wireless and Cable Information')
+  assert.equal(r.cards[0]?.path, '/corpus/olc/1425')
+  assert.equal(r.cards[0]?.body, 'June 19, 1941. Concludes the President may control radio stations.')
+  assert.equal(r.cards[1]?.title, 'Executive Powers Available By Virtue Of The National Emergency')
+  assert.equal(r.cards[1]?.body, 'July 18, 1961.')
+  assert.equal(r.cards[2]?.path, '/corpus/olc/112')
+  assert.equal(r.cards[2]?.title, 'a survey of emergency statutes.')
+  assert.match(r.rest, /^Adjacent/)
+
+  assert.equal(isCitationToken('rt://olc/1425'), true)
+  assert.equal(isCitationToken('1425', { slug: 'olc', id: '1425' }), true)
+  assert.equal(isCitationToken('olc/1425'), true)
+  assert.equal(isCitationToken('Legal Authorities'), false)
+  assert.equal(isCitationToken('opinion', { slug: 'olc', id: '112' }), false)
+
+  const titles = titlesIn(tokenListAnswer)
+  assert.equal(titles.get('/corpus/olc/1425'), 'Presidential Control of Wireless and Cable Information')
+  assert.equal(titles.get('/corpus/olc/1466'), 'Review of STELLAR WIND')
+  assert.equal(titles.has('/corpus/olc/112'), false)
+  assert.equal(titlesIn(listAnswer).get('/corpus/olc/867'), 'Legal Authorities Available to the President')
 })
 
 test('prose with fewer than two items is not a list: no cards, the whole text is the lead', () => {
