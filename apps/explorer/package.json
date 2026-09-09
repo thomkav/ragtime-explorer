@@ -1,0 +1,7 @@
+{
+  "name": "ragtime-explorer-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "RAGtime Explorer, the page. Not started: it begins from the mock, on @ragtime/client."
+}

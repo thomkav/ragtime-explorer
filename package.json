@@ -1,0 +1,24 @@
+{
+  "name": "ragtime-explorer",
+  "private": true,
+  "version": "0.0.0",
+  "description": "RAGtime Explorer — a chat-forward second front door that shows its work, and the shared client package the RAGtime browser UXs build on.",
+  "type": "module",
+  "repository": "github:thomkav/ragtime-explorer",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "check": "npm run check --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.3",
+    "typescript": "~6.0.2"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
