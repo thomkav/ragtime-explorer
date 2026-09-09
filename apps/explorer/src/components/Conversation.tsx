@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { CorpusRegistry, ExplorerBrief } from '@lawfare/ragtime-client'
 
+import { normalizeBrief, sameBrief } from '../model/brief.ts'
 import { phasePill, plural, workingLabel } from '../model/format.ts'
 import type { Turn } from '../model/turn.ts'
 import { Answer } from './Answer.tsx'
@@ -31,10 +32,23 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
         const isLast = i === turns.length - 1
         const label = turn.running ? workingLabel(turn, lastLabel.current) : ''
         if (turn.running) lastLabel.current = label
+        // The pinned bar above the conversation already says which brief research runs
+        // against, so a transcript copy of the same brief is a second bar saying the same
+        // thing. It earns its place only when it differs from the pinned one — a proposal
+        // not yet accepted, or a brief the reader edited (item 8), which is the only way
+        // to read back which brief an earlier phase actually ran against.
+        const shownBrief = isLast && proposed ? proposed : turn.brief
+        const showBrief = !!shownBrief && (!brief || !sameBrief(normalizeBrief(shownBrief), brief))
+        // Accepting an edited brief starts a new research phase but keeps the message
+        // history (`hooks/useExplorer.ts` clears it only on Start over), so from the
+        // second one on, the answers already on the page are still in play.
+        const followsAnswers = turns.slice(0, i).some((t) => t.phase === 'research' && !!t.answer)
         return (
           <article key={turn.index} className={'turn turn-' + turn.phase}>
             {turn.promptKind === 'accept' ? (
-              <div className="marker">research started with the brief</div>
+              <div className="marker">
+                research started with the brief{followsAnswers && '. You can now continue with these answers in mind.'}
+              </div>
             ) : (
               <div className={'bubble user' + (turn.promptKind === 'reply' ? ' reply' : '')}>{turn.prompt}</div>
             )}
@@ -63,12 +77,17 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
               </div>
             )}
 
-            {turn.brief && (
+            {showBrief && (
               <BriefCard
-                brief={isLast && proposed ? proposed : turn.brief}
+                brief={shownBrief}
                 registry={registry}
                 editable={isLast && !brief}
-                accepted={!isLast || brief ? brief : null}
+                // Its own brief, never the accepted one: a card only survives the check
+                // above by differing from what is pinned, and `accepted` would make it
+                // render that pinned brief instead — two identical bars again, with the
+                // history it was kept for overwritten. Null also drops the Edit
+                // affordance, which belongs to the pinned bar; this card is a record.
+                accepted={null}
                 disabled={busy}
                 startOpen={false}
                 onAccept={onAccept}

@@ -123,6 +123,19 @@ opens the list. What folds is the list; what stays is the claim.
 A **proposed** brief does not fold. It is the one card the reader has to act on, so it
 stays open until it is accepted, and folds afterwards — settled state.
 
+Folding the brief made a duplicate visible that had always been there: the same brief
+pinned above the conversation and again in the transcript, now as two near-identical bars.
+The transcript copy renders only when it **differs** from the pinned one, which is what an
+edited brief produces (item 8) — so an unedited conversation shows one bar, and after an
+edit the transcript still says which brief the earlier phase ran against. That card is
+passed `accepted={null}`: with the accepted brief it would render the *pinned* brief
+rather than its own, which is both the duplicate again and the loss of the history it was
+kept for. Null also drops its Edit affordance — editing belongs to the pinned bar.
+
+Accepting an edited brief keeps the message history (`useExplorer` clears it only on Start
+over), so from the second acceptance on the marker says the earlier answers are still in
+play.
+
 Because the answer is now closed on every viewport, nothing outside `styles.css` reads the
 breakpoint. `hooks/useNarrow.ts` existed only to decide these `open` attributes on a phone
 and is gone; the `@media` block keeps the layout half of the narrow fix.
