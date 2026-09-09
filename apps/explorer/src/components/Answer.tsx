@@ -1,7 +1,7 @@
 import type { ExplorerBrief } from '@ragtime/client'
 
 import { onApp } from '../config.ts'
-import { detectShape, firstCitation, firstNumber, splitListAnswer } from '../model/answer-shape.ts'
+import { detectShape, firstCitation, firstNumber, linkifyCitations, splitListAnswer } from '../model/answer-shape.ts'
 import { costLine, stopBadge } from '../model/format.ts'
 import { knownTitles, sourcesOf, workspaceHandoffs } from '../model/sources.ts'
 import type { Turn } from '../model/turn.ts'
@@ -29,10 +29,12 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
   const report = sourcesOf(turn, priorTurns)
   const workspaces = workspaceHandoffs(turn)
   const titles = knownTitles(turn, priorTurns)
+  // Every citation form as a link before anything renders; the raw text stays for the count, whose first number must not be an id.
+  const answer = linkifyCitations(turn.answer, titles)
 
   let body: React.ReactNode
   if (shape === 'list') {
-    const split = splitListAnswer(turn.answer)
+    const split = splitListAnswer(answer)
     body = split.cards.length ? (
       <>
         {split.lead && <Markdown text={split.lead} appUrl={appUrl} titles={titles} />}
@@ -55,7 +57,7 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
         {split.rest && <Markdown text={split.rest} appUrl={appUrl} titles={titles} />}
       </>
     ) : (
-      <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
+      <Markdown text={answer} appUrl={appUrl} titles={titles} />
     )
   } else if (shape === 'count') {
     const n = firstNumber(turn.answer)
@@ -72,11 +74,11 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
             )}
           </div>
         )}
-        <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
+        <Markdown text={answer} appUrl={appUrl} titles={titles} />
       </>
     )
   } else if (shape === 'document') {
-    const c = firstCitation(turn.answer)
+    const c = firstCitation(answer)
     body = (
       <>
         {c && (
@@ -84,11 +86,11 @@ export function Answer({ turn, priorTurns, brief, appUrl, now }: Props) {
             Open {titles.get(c.path) ?? c.title} ↗
           </a>
         )}
-        <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
+        <Markdown text={answer} appUrl={appUrl} titles={titles} />
       </>
     )
   } else {
-    body = <Markdown text={turn.answer} appUrl={appUrl} titles={titles} />
+    body = <Markdown text={answer} appUrl={appUrl} titles={titles} />
   }
 
   return (
