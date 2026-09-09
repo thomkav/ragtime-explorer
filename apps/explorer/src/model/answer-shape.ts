@@ -47,6 +47,59 @@ export function firstCitation(markdown: string): Citation | null {
   return citationsIn(markdown)[0] ?? null
 }
 
+/**
+ * Link text that is the citation itself rather than a title: the model wrote
+ * `[rt://olc/1425](rt://olc/1425)` or `[1425](rt://olc/1425)` against the
+ * prompt's `[title](rt://…)`. Seen live on 2026-09-09 in every item of a list
+ * answer; the page recovers the title from the item's bold run or from the
+ * trail instead of showing the token.
+ */
+export function isCitationToken(text: string, c?: { slug: string; id: string }): boolean {
+  const t = text.trim()
+  if (/^rt:\/\//i.test(t)) return true
+  if (!c) return /^[a-z_]+(?::[a-z_]+)?[/:][A-Za-z0-9:_.-]+$/.test(t)
+  return t === c.id || t === c.slug + '/' + c.id || t === c.slug + ':' + c.id
+}
+
+const BOLD = /\*\*([^*]{1,160})\*\*/
+
+/**
+ * Document path → title, read off the answer itself: a citation whose link
+ * text is a title gives it directly; one whose link text is a token gives it
+ * when its line carries a bold run (`**Title** — date — [rt://olc/1](rt://olc/1)`).
+ * A line with more than one citation is skipped as ambiguous.
+ */
+export function titlesIn(markdown: string): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const line of markdown.split('\n')) {
+    const cites = citationsIn(line)
+    if (cites.length !== 1) continue
+    const c = cites[0]!
+    if (!isCitationToken(c.title, c)) {
+      out.set(c.path, c.title.trim())
+      continue
+    }
+    const bold = BOLD.exec(line)
+    if (bold) out.set(c.path, bold[1]!.trim())
+  }
+  return out
+}
+
+/** A card body after its title and citation are lifted out: no leading separator, no dash left dangling before punctuation or the end of a line. */
+function tidy(s: string): string {
+  return s
+    .replace(/^\s*[—–:,-]\s*/, '')
+    .replace(/[ \t]*[—–][ \t]*(?=[.,;:)]|[ \t]*$)/gm, '')
+    .replace(/^\s*[—–:,-]\s*/, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim()
+}
+
+function firstWords(text: string): string {
+  const words = text.split(/\s+/).filter(Boolean)
+  return words.slice(0, 10).join(' ') + (words.length > 10 ? '…' : '')
+}
+
 /** The first number in the text (commas allowed), for the count renderer. */
 export function firstNumber(markdown: string): string | null {
   const m = /(?<![\w.])(\d{1,3}(?:,\d{3})+|\d+)(?![\w,.]*\d)/.exec(markdown.replace(/rt:\/\/[^)\s]+/g, ''))
@@ -71,8 +124,10 @@ const ITEM = /^(?:[-*•]|\d{1,3}[.)])\s+/
 /**
  * Split a list-shaped answer into a lead paragraph, one card per top-level
  * list item, and whatever follows the list. An item is titled by its first
- * citation (the link is lifted out of the body so it is not shown twice);
- * an item without one is titled by its first bold run or its first words.
+ * citation (the link is lifted out of the body so it is not shown twice) —
+ * unless that citation is its own link text, in which case the item's bold
+ * run is the title, else its first words; an item without a citation is
+ * titled by its first bold run or its first words.
  * Fewer than two items means the answer was not really a list: no cards.
  */
 export function splitListAnswer(markdown: string): ListAnswer {
@@ -111,15 +166,18 @@ export function splitListAnswer(markdown: string): ListAnswer {
   const cards = items.map((parts) => {
     const text = parts.join('\n').trim()
     const cites = citationsIn(text)
+    const bold = BOLD.exec(text)
     if (cites.length) {
       const c = cites[0]!
-      const body = text.replace(`[${c.title}](rt://${c.slug}/${c.id})`, '').replace(/^\s*[—–:,-]\s*/, '').trim()
-      return { title: c.title, path: c.path, body }
+      const without = text.replace(`[${c.title}](rt://${c.slug}/${c.id})`, '')
+      if (!isCitationToken(c.title, c)) return { title: c.title, path: c.path, body: tidy(without) }
+      // The citation is its own link text: the bold run is the title, else the first words.
+      if (bold) return { title: bold[1]!.trim(), path: c.path, body: tidy(without.replace(bold[0], '')) }
+      const body = tidy(without)
+      return { title: firstWords(body), path: c.path, body }
     }
-    const bold = /\*\*([^*]{1,160})\*\*/.exec(text)
-    if (bold) return { title: bold[1]!, path: null, body: text.replace(bold[0], '').replace(/^\s*[—–:,-]\s*/, '').trim() }
-    const words = text.split(/\s+/)
-    return { title: words.slice(0, 10).join(' ') + (words.length > 10 ? '…' : ''), path: null, body: text }
+    if (bold) return { title: bold[1]!.trim(), path: null, body: tidy(text.replace(bold[0], '')) }
+    return { title: firstWords(text), path: null, body: text }
   })
   return { lead: lead.join('\n').trim(), cards, rest: rest.join('\n').trim() }
 }

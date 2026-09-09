@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 
 import type { ExplorerBrief, ExplorerEvent } from '@ragtime/client'
 import { applyEvent, lastCost, newTurn, roundCosts, type Turn } from './turn.ts'
-import { sourcesOf, workspaceHandoffs } from './sources.ts'
+import { knownTitles, sourcesOf, workspaceHandoffs } from './sources.ts'
 import { costLine, phasePill, stopBadge, workingLabel } from './format.ts'
 
 const brief: ExplorerBrief = { goal: 'List the OLC opinions on emergency powers', corpora: ['olc'], answer_shape: 'a list' }
@@ -128,6 +128,34 @@ test('sources: a turn that fetched nothing is search-only, unless an earlier tur
   const later = sourcesOf(r, [earlier])
   assert.equal(later.searchOnly, false)
   assert.deepEqual(later.sources.map((x) => x.read), [true, true, false])
+})
+
+test('sources: a citation that is its own link text is titled from the answer, else from the trail, else slug/id', () => {
+  const events: ExplorerEvent[] = [
+    { type: 'phase', phase: 'research' },
+    { type: 'tool_call', step: 1, id: 'a', name: 'search_keyword', input: { query: 'wireless', corpora: ['olc'] } },
+    { type: 'tool_result', step: 1, id: 'a', name: 'search_keyword', ok: true, summary: 'olc 2', cost_cents: 0, ms: 5,
+      detail: { kind: 'search', total: 2, hits: [{ corpus: 'olc', count: 2, top: [{ id: '2100', title: 'Executive Powers Available' }, { id: 9, title: 'Nine' }] }] } },
+    { type: 'cost', turn_cents: 1, conversation_cents: 1, conversation_spend: 1, cap_cents: 25, steps: 1, step_cap: 6 },
+    { type: 'text', delta: '1. **Presidential Control of Wireless** — 1941 — [rt://olc/1425](rt://olc/1425).\n2. See [rt://olc/2100](rt://olc/2100).\n3. And [rt://olc/7](rt://olc/7).\n4. Also [Section 706](rt://olc/50).' },
+    { type: 'handoff', kind: 'document', url: '/corpus/olc/1425', label: 'rt://olc/1425' },
+    { type: 'handoff', kind: 'document', url: '/corpus/olc/2100', label: 'rt://olc/2100' },
+    { type: 'handoff', kind: 'document', url: '/corpus/olc/7', label: 'rt://olc/7' },
+    { type: 'handoff', kind: 'document', url: '/corpus/olc/50', label: 'Section 706' },
+    { type: 'cost', turn_cents: 2, conversation_cents: 2, conversation_spend: 2, cap_cents: 25, steps: 1, step_cap: 6 },
+    { type: 'done', envelope: 'e.m', stop: 'end_turn', history: [], calls: 2 },
+  ]
+  const r = fold(newTurn(2, 'research', 'go', 'accept', 0), events)
+  const s = sourcesOf(r)
+  assert.deepEqual(
+    s.sources.map((x) => x.title),
+    ['Presidential Control of Wireless', 'Executive Powers Available', 'olc/7', 'Section 706'],
+  )
+  assert.equal(s.searchOnly, true)
+  const known = knownTitles(r)
+  assert.equal(known.get('/corpus/olc/9'), 'Nine')
+  assert.equal(known.get('/corpus/olc/1425'), 'Presidential Control of Wireless')
+  assert.equal(known.get('/corpus/olc/50'), 'Section 706')
 })
 
 test('the working label follows the last event; keepalives keep the previous label', () => {

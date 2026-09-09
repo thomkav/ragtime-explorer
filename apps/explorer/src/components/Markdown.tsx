@@ -4,13 +4,30 @@ import { links } from '@ragtime/client'
 
 import { onApp } from '../config.ts'
 
+type Props = {
+  text: string
+  appUrl: string
+  className?: string
+  /** Document path (origin-relative) → title; a link whose text is the citation itself shows the title instead. */
+  titles?: Map<string, string>
+}
+
+/** The text of a link's children when it is plain text; null when it is richer than that. */
+function plainText(children: React.ReactNode): string | null {
+  if (typeof children === 'string') return children
+  if (Array.isArray(children) && children.length === 1 && typeof children[0] === 'string') return children[0]
+  return null
+}
+
 /**
  * The answer's markdown. `rt://slug/id` citations resolve through the client
  * package's `links.fromCitation` and nothing else (contract §4); every other
  * URL goes through react-markdown's own transform, which drops unsafe
- * schemes. Links open on the public site in a new tab.
+ * schemes. Links open on the public site in a new tab. A citation the model
+ * wrote as its own link text (`[rt://olc/1425](rt://olc/1425)`) shows the
+ * title the conversation knows for it, when it knows one.
  */
-export function Markdown({ text, appUrl, className }: { text: string; appUrl: string; className?: string }) {
+export function Markdown({ text, appUrl, className, titles }: Props) {
   const urlTransform = (url: string): string => {
     if (url.startsWith('rt://')) {
       try {
@@ -21,6 +38,13 @@ export function Markdown({ text, appUrl, className }: { text: string; appUrl: st
     }
     return defaultUrlTransform(url)
   }
+  const titleFor = (href: string, children: React.ReactNode): string | null => {
+    if (!titles) return null
+    const shown = plainText(children)
+    if (shown === null || !shown.trim().startsWith('rt://')) return null
+    for (const [path, title] of titles) if (href === onApp(appUrl, path)) return title
+    return null
+  }
   return (
     <div className={className ? 'md ' + className : 'md'}>
       <ReactMarkdown
@@ -30,7 +54,7 @@ export function Markdown({ text, appUrl, className }: { text: string; appUrl: st
           a: ({ href, children }) =>
             href ? (
               <a href={href} target="_blank" rel="noreferrer noopener">
-                {children}
+                {titleFor(href, children) ?? children}
               </a>
             ) : (
               <span>{children}</span>
