@@ -153,6 +153,18 @@ export type ExplorerCostEvent = {
   cap_cents: number
   steps: number
   step_cap: number
+  /**
+   * Model calls charged today against the caller's daily allowance, and the allowance
+   * itself. Both absent from a worker deployed before ragtime-worker#118, and absent for
+   * a paid caller, who has no daily allowance — so a renderer must handle their absence
+   * rather than defaulting them.
+   *
+   * The worker counts per address per UTC day. Behind a mount that adds the credential on
+   * its own side the address is the mount's, so this is one pool shared by everyone the
+   * mount admits, not a limit on the reader.
+   */
+  ip_calls?: number
+  ip_cap?: number
 }
 export type ExplorerErrorEvent = { type: 'error'; code: string; message: string; retryable: boolean }
 export type ExplorerDoneEvent = {

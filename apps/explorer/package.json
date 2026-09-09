@@ -6,6 +6,8 @@
   "description": "RAGtime Explorer, the page: a conversation that orients before it spends, a trail that shows the work, and handoffs into the workspaces. On @lawfare/ragtime-client.",
   "scripts": {
     "dev": "vite",
+    "dev:stub": "node dev/hosted-stub.mjs",
+    "dev:hosted": "VITE_TURN_URL=http://127.0.0.1:8821/turn vite",
     "check": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
     "test": "npm run build -w @lawfare/ragtime-client && node --test src/model/*.test.ts",
     "build": "npm run build -w @lawfare/ragtime-client && vite build",

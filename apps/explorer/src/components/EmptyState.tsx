@@ -22,7 +22,7 @@ export function EmptyState({ registry, pinned, disabled, onAsk, onTogglePin }: P
       <h2>Ask the federal record a question.</h2>
       <p className="lede">
         Orient runs first and costs almost nothing: it either asks you one question or proposes a research brief you can edit.
-        Research spends against the brief, and the trail on the right shows every step and what it cost.
+        Research spends against the brief, and the trail shows every step and what it cost.
       </p>
       <div className="examples">
         {EXAMPLE_QUESTIONS.map((q) => (

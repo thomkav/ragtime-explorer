@@ -39,6 +39,25 @@ allowance, which is the trade the gate is making.
 credential into the body, so it cannot be the caller; the hop sends the turn itself and
 reads the reply with the package's own parser.
 
+### Driving that page without spending anything
+
+`npm run dev` with no `VITE_TURN_URL` serves the **other** page: it opens Settings by
+itself, asks for a password, and holds the composer shut until one is pasted. No member of
+a gated mount ever sees that screen, so tuning it is tuning the wrong thing — and naming
+the real mount instead spends real money on every look.
+
+`dev/hosted-stub.mjs` is the mount with the model taken out: the same event stream in the
+order the contract guarantees, carrying a fixed transcript. Two terminals:
+
+```sh
+npm run dev:stub   -w ragtime-explorer-app   # the mount, on :8821
+npm run dev:hosted -w ragtime-explorer-app   # the page, pointed at it
+```
+
+`--refuse ip_quota|demo_quota|cap_cents` makes it refuse every turn instead, which is the
+only way to see the quota and cap surfaces without waiting for a real allowance to run out.
+`--pace <ms>` slows the stream down to watch the working indicator.
+
 ## The first shape, and where each decision lives
 
 The fifteen answers on [ragtime-dev#168](https://github.com/benjaminwittes/ragtime-dev/issues/168)
@@ -63,10 +82,29 @@ The fifteen answers on [ragtime-dev#168](https://github.com/benjaminwittes/ragti
 The pure logic is in `src/model/` and runs under `node --test`; the components are thin over
 it. Citations resolve only through `links.fromCitation` (`components/Markdown.tsx`).
 
+## What the mount changed, and what it took to say so
+
+The first shape was designed for the page's own model, where the reader holds the
+credential. Behind a mount that holds it instead, four of its answers stopped being true —
+found by reading the code and then by looking at the screen on a phone.
+
+| What was wrong | Where it is answered now |
+|---|---|
+| Settings rendered an editable **Worker** field that reaches nothing when a mount holds the credential: the hop is the only caller, so a member could type in it, press Save, and change nothing | `components/Settings.tsx` — the field is the page's own model only |
+| Nothing said the daily allowance is **shared**. The Meter reports this conversation's spend against its 25¢ cap; the pool the worker counts per address per day was invisible, and behind a mount that address is the mount's — so everyone the gate admits draws on one pool and the first signal was a refusal | `model/allowance.ts`, `components/Allowance.tsx`; the Meter's line now names the conversation |
+| A quota refusal told a signed-in member to *sign in to continue* — the worker's words for a visitor on the public site, and advice that would change nothing here | `model/allowance.ts` (`explainRefusal`), rewritten once in `hooks/useExplorer.ts` so the header and the turn's error block agree |
+| No way back: a full-page app inside a tenant, with the browser's Back button as the only exit | `model/home.ts`, `HOME_URL` in `config.ts` — the mount's own `VITE_BASE` says where the page was linked from; `VITE_HOME_URL` overrides |
+| One breakpoint, and under it a 390×844 phone got about **65px** of scrollable answer: the aside was pinned at 40vh and the accepted brief hangs above the conversation rather than scrolling with it | the `@media` block at the end of `styles.css` (last, deliberately) and `hooks/useNarrow.ts`; the brief and the trail collapse and are one tap from open |
+
 ## Not in the first shape
 
 Sign-in and bring-your-own-key (the client package carries both `AuthArg` modes; the page
 uses the demo credential, the beta posture). The distillation panel and the tree view. The
-public site does not yet resolve `/corpus/:slug/:id` or the `ids=`/`mode=` parameters, so a
-document link lands on the corpus workspace until the deep-link PR there adopts
-`links.parse`.
+public site resolves `/corpus/:slug/:id` since benjaminwittes/ragtime#166, so a document
+link opens its sheet; the `ids=`/`mode=` parameters are still unread there, so a
+workspace handoff carrying them lands on the corpus workspace unfiltered.
+
+The allowance panel shows a live count only when the worker sends one (`ip_calls` and
+`ip_cap` on the `cost` event, `ExplorerCostEvent` in the client package). Until that
+deploys it states the pool and what this conversation spent, and claims nothing about what
+other members have used — see ragtime-worker#118.
