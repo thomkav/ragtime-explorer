@@ -85,9 +85,10 @@ export function titlesIn(markdown: string): Map<string, string> {
   return out
 }
 
-/** A card body after its title and citation are lifted out: no leading separator, no dash left dangling before punctuation or the end of a line. */
+/** A card body after its title and citation are lifted out: no empty bold where a bolded link was, no leading separator, no dash left dangling before punctuation or the end of a line. */
 function tidy(s: string): string {
   return s
+    .replace(/\*\*\s*\*\*/g, '')
     .replace(/^\s*[—–:,-]\s*/, '')
     .replace(/[ \t]*[—–][ \t]*(?=[.,;:)]|[ \t]*$)/gm, '')
     .replace(/^\s*[—–:,-]\s*/, '')

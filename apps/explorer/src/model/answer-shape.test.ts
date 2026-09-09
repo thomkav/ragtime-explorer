@@ -50,13 +50,17 @@ const tokenListAnswer = [
   '1. **Presidential Control of Wireless and Cable Information** — June 19, 1941 — [rt://olc/1425](rt://olc/1425). Concludes the President may control radio stations.',
   '2. **Executive Powers Available By Virtue Of The National Emergency** — July 18, 1961 — [rt://olc/2100](rt://olc/2100).',
   '3. [rt://olc/112](rt://olc/112) — a survey of emergency statutes.',
+  '4. **[Legal Authorities Supporting the NSA](rt://olc/246)** (January 19, 2006) — Addresses interception, not network control.',
   '',
   'Adjacent: **Review of STELLAR WIND** — June 22, 2004 — [rt://olc/1466](rt://olc/1466)',
 ].join('\n')
 
 test('a citation that is its own link text: the card is titled by the bold run, the body loses the dangling dash, the title map reads the answer', () => {
   const r = splitListAnswer(tokenListAnswer)
-  assert.equal(r.cards.length, 3)
+  assert.equal(r.cards.length, 4)
+  // A bolded link: the title is the link text as before, and no empty `****` is left in the body.
+  assert.equal(r.cards[3]?.title, 'Legal Authorities Supporting the NSA')
+  assert.equal(r.cards[3]?.body, '(January 19, 2006) — Addresses interception, not network control.')
   assert.equal(r.cards[0]?.title, 'Presidential Control of Wireless and Cable Information')
   assert.equal(r.cards[0]?.path, '/corpus/olc/1425')
   assert.equal(r.cards[0]?.body, 'June 19, 1941. Concludes the President may control radio stations.')
