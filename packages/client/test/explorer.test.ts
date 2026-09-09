@@ -40,7 +40,10 @@ const orientTurn =
   frame('text', { delta: 'I will search ' }) +
   frame('text', { delta: 'the OLC corpus.' }) +
   frame('tool_call', { step: 1, id: 'toolu_1', name: 'search_keyword', input: { query: 'removal', corpora: ['olc'] } }) +
-  frame('tool_result', { step: 1, id: 'toolu_1', name: 'search_keyword', ok: true, summary: 'olc 104', count: 5, cost_cents: 0, ms: 745 }) +
+  frame('tool_result', {
+    step: 1, id: 'toolu_1', name: 'search_keyword', ok: true, summary: 'olc 104', count: 5, cost_cents: 0, ms: 745,
+    detail: { kind: 'search', total: 104, hits: [{ corpus: 'olc', count: 104, top: [{ id: '112', title: 'Emergency Statutes' }] }, { corpus: 'usc', count: 0, top: [] }] },
+  }) +
   frame('handoff', { kind: 'workspace', url: '/corpus/olc?q=removal', label: 'Open olc search: removal' }) +
   frame('cost', { turn_cents: 0.2564, conversation_cents: 1, conversation_spend: 0.2564, cap_cents: 25, steps: 1, step_cap: 2 }) +
   frame('tool_call', { step: 3, id: 'toolu_2', name: 'propose_brief', input: brief }) +
@@ -70,6 +73,12 @@ test('parses a turn in order, each event typed by its name', async () => {
     assert.equal(result.summary, 'olc 104')
     assert.equal(result.count, 5)
     assert.equal(result.ok, true)
+    assert.equal(result.detail?.kind, 'search')
+    if (result.detail?.kind === 'search') {
+      assert.equal(result.detail.total, 104)
+      assert.deepEqual(result.detail.hits.map((h) => h.corpus), ['olc', 'usc'])
+      assert.equal(result.detail.hits[0]?.top[0]?.title, 'Emergency Statutes')
+    }
   }
   const last = events[events.length - 1]
   assert.equal(last?.type, 'done')
@@ -78,6 +87,18 @@ test('parses a turn in order, each event typed by its name', async () => {
     assert.equal(last.calls, 3)
     assert.equal(last.history.length, 2)
   }
+})
+
+test('a tool_result from a worker without detail still types; a failed one carries none', async () => {
+  const raw =
+    frame('phase', { phase: 'research' }) +
+    frame('tool_result', { step: 1, id: 'toolu_old', name: 'get_facets', ok: true, summary: '7 matching', cost_cents: 0, ms: 12 }) +
+    frame('tool_result', { step: 1, id: 'toolu_bad', name: 'get_facets', ok: false, summary: 'Tool failed: db down', cost_cents: 0, ms: 3 }) +
+    frame('done', { envelope: 'e.m', stop: 'end_turn', history: [], calls: 1 })
+  const events = await collect(streamOf([raw]))
+  const results = events.filter((e) => e.type === 'tool_result')
+  assert.equal(results.length, 2)
+  for (const r of results) if (r.type === 'tool_result') assert.equal(r.detail, undefined)
 })
 
 test('frames split across chunk boundaries reassemble', async () => {
