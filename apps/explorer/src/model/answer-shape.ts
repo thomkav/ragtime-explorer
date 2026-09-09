@@ -6,7 +6,7 @@
  * falls back to narrative.
  */
 
-import { links } from '@ragtime/client'
+import { links } from '@lawfare/ragtime-client'
 
 export type AnswerShape = 'list' | 'count' | 'narrative' | 'document'
 

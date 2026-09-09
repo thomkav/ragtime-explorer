@@ -1,5 +1,5 @@
 import { useEffect, useState, type DragEvent, type KeyboardEvent } from 'react'
-import type { CorpusRegistry, ExplorerBrief } from '@ragtime/client'
+import type { CorpusRegistry, ExplorerBrief } from '@lawfare/ragtime-client'
 
 import { ANSWER_SHAPES, detectShape } from '../model/answer-shape.ts'
 import { briefJson, moveCorpus, normalizeBrief, sameBrief } from '../model/brief.ts'

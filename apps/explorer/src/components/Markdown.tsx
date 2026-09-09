@@ -1,6 +1,6 @@
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { links } from '@ragtime/client'
+import { links } from '@lawfare/ragtime-client'
 
 import { onApp } from '../config.ts'
 

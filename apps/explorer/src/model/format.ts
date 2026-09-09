@@ -4,7 +4,7 @@
  * (item 9), the badge a stopped turn wears (item 7), the per-turn cost line.
  */
 
-import type { ExplorerStop } from '@ragtime/client'
+import type { ExplorerStop } from '@lawfare/ragtime-client'
 import { elapsedMs, lastCost, type TrailCall, type Turn } from './turn.ts'
 
 /** `10.3¢`; under a tenth of a cent reads `<0.1¢`; zero reads `0¢`. */

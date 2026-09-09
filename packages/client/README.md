@@ -1,14 +1,14 @@
-# @ragtime/client
+# @lawfare/ragtime-client
 
 The one owner of the connection to the RAGtime worker for the browser UXs. Framework-free:
 `fetch` is the only platform call. React glue stays per app.
 
-Install: `npm install @ragtime/client`. Published from `packages/client` of
+Install: `npm install @lawfare/ragtime-client`. Published from `packages/client` of
 [thomkav/ragtime-explorer](https://github.com/thomkav/ragtime-explorer) under MIT; ES module only,
 types included.
 
 ```ts
-import { createClient } from '@ragtime/client'
+import { createClient } from '@lawfare/ragtime-client'
 
 const client = createClient({
   baseUrl: 'http://127.0.0.1:8787',                 // a local wrangler dev; production by default
@@ -62,8 +62,8 @@ past two consumers, along with an OpenAPI description of the worker.
 
 ```sh
 npm install            # at the repo root
-npm run check -w @ragtime/client     # tsc --strict, sources and tests
-npm test -w @ragtime/client          # node --test; no network
+npm run check -w @lawfare/ragtime-client     # tsc --strict, sources and tests
+npm test -w @lawfare/ragtime-client          # node --test; no network
 ```
 
 The live test drives one orient turn against a running endpoint (about a cent of the

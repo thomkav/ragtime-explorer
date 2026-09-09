@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import type { ExplorerBrief, ExplorerEvent } from '@ragtime/client'
+import type { ExplorerBrief, ExplorerEvent } from '@lawfare/ragtime-client'
 import { applyEvent, lastCost, newTurn, roundCosts, type Turn } from './turn.ts'
 import { knownTitles, sourcesOf, workspaceHandoffs } from './sources.ts'
 import { costLine, phasePill, stopBadge, workingLabel } from './format.ts'

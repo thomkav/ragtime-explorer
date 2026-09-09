@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { CorpusRegistry, ExplorerBrief } from '@ragtime/client'
+import type { CorpusRegistry, ExplorerBrief } from '@lawfare/ragtime-client'
 
 import { phasePill, workingLabel } from '../model/format.ts'
 import type { Turn } from '../model/turn.ts'

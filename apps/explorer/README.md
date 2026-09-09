@@ -1,7 +1,7 @@
 # apps/explorer
 
 The Explorer page: a conversation that orients before it spends, a trail that shows the work,
-and handoffs into the workspaces on the public site. React + Vite, on `@ragtime/client`; the
+and handoffs into the workspaces on the public site. React + Vite, on `@lawfare/ragtime-client`; the
 package owns the worker connection and the link grammar, the app owns what is on the screen.
 
 ```sh
@@ -9,7 +9,7 @@ npm install                             # at the repo root
 npm run dev -w ragtime-explorer-app     # http://localhost:8820 — hot-reloads the client package too
 npm run check -w ragtime-explorer-app   # tsc, app and vite config
 npm test -w ragtime-explorer-app        # node --test over src/model; no DOM, no network
-npm run build -w ragtime-explorer-app   # builds @ragtime/client to dist/, then the page
+npm run build -w ragtime-explorer-app   # builds @lawfare/ragtime-client to dist/, then the page
 ```
 
 Open Settings first and paste the Explorer password; it stays in the tab. The worker
@@ -28,7 +28,7 @@ The fifteen answers on [ragtime-dev#168](https://github.com/benjaminwittes/ragti
 | 2 | Orient and research narration stays in the conversation, faint | `model/turn.ts` (`narration`), `.narration` in `styles.css` |
 | 3 | A clarifying question is a distinct block, composer focused, pill reads `orient · asked` | `components/Conversation.tsx`, `model/format.ts` (`phasePill`) |
 | 4 | Trail = tool calls + workspace handoffs; document handoffs are sources under the answer | `components/Trail.tsx`, `model/sources.ts` |
-| 5 | Structured per-tool summaries, typed | `ExplorerToolDetail` in `@ragtime/client`; rendered in `Trail.tsx` |
+| 5 | Structured per-tool summaries, typed | `ExplorerToolDetail` in `@lawfare/ragtime-client`; rendered in `Trail.tsx` |
 | 6 | Meter stays; per-turn cost line; per-call cost only in the trail, one line per round | `components/Meter.tsx`, `model/format.ts` (`costLine`, `cents`), `model/turn.ts` (`roundCosts`) |
 | 7 | A badge when the round limit or the budget stopped the turn | `model/format.ts` (`stopBadge`), `components/Answer.tsx` |
 | 8 | Follow-ups keep the brief; an edited brief starts a new research phase; explicit start over; no auto re-orient | `hooks/useExplorer.ts` |

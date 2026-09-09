@@ -6,7 +6,7 @@
  * only an edit makes a new one.
  */
 
-import type { ExplorerBrief } from '@ragtime/client'
+import type { ExplorerBrief } from '@lawfare/ragtime-client'
 
 export function normalizeBrief(b: ExplorerBrief): ExplorerBrief {
   const out: ExplorerBrief = {

@@ -9,7 +9,7 @@ worker endpoint it talks to, `POST /explorer/turn`, is in `benjaminwittes/ragtim
 
 | Path | What | Status |
 |---|---|---|
-| `packages/client` | `@ragtime/client` — the worker connection, the Explorer turn stream, the registry, the deep-link grammar | lifted from the public frontend; `tsc --strict` and tests green |
+| `packages/client` | `@lawfare/ragtime-client` — the worker connection, the Explorer turn stream, the registry, the deep-link grammar | lifted from the public frontend; `tsc --strict` and tests green |
 | `apps/explorer` | the Explorer page — React + Vite on the client package | first shape from the fifteen design answers on #168; `tsc`, model tests and `vite build` green; not yet driven in a browser by a person |
 
 ```sh

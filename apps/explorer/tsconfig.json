@@ -20,7 +20,7 @@
     "noFallthroughCasesInSwitch": true,
 
     "paths": {
-      "@ragtime/client": ["../../packages/client/src/index.ts"]
+      "@lawfare/ragtime-client": ["../../packages/client/src/index.ts"]
     }
   },
   "include": ["src"]
