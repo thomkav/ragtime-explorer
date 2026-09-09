@@ -7,7 +7,7 @@
  */
 
 import { links, type ExplorerHandoffEvent } from '@ragtime/client'
-import { isCitationToken, titlesIn } from './answer-shape.ts'
+import { citationsIn, isCitationToken, linkifyCitations, titlesIn } from './answer-shape.ts'
 import type { Turn } from './turn.ts'
 
 export type Source = {
@@ -119,6 +119,13 @@ export function sourcesOf(turn: Turn, priorTurns: readonly Turn[] = []): SourceR
     const label = (h.label ?? '').trim()
     const title = label && !isCitationToken(label, { slug: parsed.slug, id: parsed.id }) ? label : (known.get(h.url) ?? k)
     sources.push({ slug: parsed.slug, id: parsed.id, title, path: h.url, read: read.has(k) })
+  }
+  // The worker makes a handoff only for the link form; a citation the model bracketed or wrote naked is a source all the same.
+  for (const c of citationsIn(linkifyCitations(turn.answer, known))) {
+    const k = key(c.slug, c.id)
+    if (seen.has(k)) continue
+    seen.add(k)
+    sources.push({ slug: c.slug, id: c.id, title: isCitationToken(c.title, c) ? (known.get(c.path) ?? k) : c.title, path: c.path, read: read.has(k) })
   }
   const readCount = sources.filter((s) => s.read).length
   const readThisTurn = readDocuments([turn])

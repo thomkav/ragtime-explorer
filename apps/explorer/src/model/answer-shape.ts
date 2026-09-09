@@ -85,6 +85,61 @@ export function titlesIn(markdown: string): Map<string, string> {
   return out
 }
 
+const SLUG = '[a-z_]+(?::[a-z_]+)?'
+const ID = '[A-Za-z0-9:_.-]+'
+/** `[rt://slug/id]` or `[rt://slug/id1, id2]` or `[rt://slug/1, rt://slug/2]`: the citation bracketed on its own, no title, no link. Not followed by `(`, which would make it a markdown link. */
+const BARE_BRACKET = new RegExp('\\[\\s*rt:\\/\\/(' + SLUG + ')\\/(' + ID + '(?:\\s*,\\s*(?:rt:\\/\\/' + SLUG + '\\/)?' + ID + ')*)\\s*\\](?!\\()', 'g')
+/** A naked `rt://slug/id` in prose: not the text or the target of a markdown link. */
+const BARE_TOKEN = new RegExp('(?<![\\[(\\w/])rt:\\/\\/(' + SLUG + ')\\/(' + ID + ')(?!\\w)', 'g')
+const ITEM_PREFIX = new RegExp('^rt:\\/\\/(' + SLUG + ')\\/')
+
+/** An id as the model wrote it may carry the sentence's punctuation; keep that outside the link. */
+function splitId(raw: string): { id: string; tail: string } {
+  const m = /^(.*?)([.,;:]+)$/.exec(raw)
+  return m ? { id: m[1]!, tail: m[2]! } : { id: raw, tail: '' }
+}
+
+function linkFor(slug: string, id: string, titles?: Map<string, string>): string {
+  const cite = `rt://${slug}/${id}`
+  let path: string
+  try {
+    path = links.fromCitation(cite)
+  } catch {
+    return cite
+  }
+  return `[${titles?.get(path) ?? slug + '/' + id}](${cite})`
+}
+
+/**
+ * Citations the model wrote without the link form — `[rt://litigation/71906132]`,
+ * `[rt://litigation/73223865, 73223872]`, or a naked `rt://olc/112` in prose
+ * (seen live 2026-09-09 in a narrative answer) — rewritten as `[text](rt://…)`
+ * so they render as links: one per id, titled from what the conversation knows,
+ * else `slug/id`. Existing links are left alone.
+ */
+export function linkifyCitations(markdown: string, titles?: Map<string, string>): string {
+  const bracketed = markdown.replace(BARE_BRACKET, (_m, slug: string, idList: string) =>
+    idList
+      .split(',')
+      .map((item) => {
+        let s = slug
+        let raw = item.trim()
+        const own = ITEM_PREFIX.exec(raw)
+        if (own) {
+          s = own[1]!
+          raw = raw.slice(own[0].length)
+        }
+        const { id, tail } = splitId(raw)
+        return linkFor(s, id, titles) + tail
+      })
+      .join(', '),
+  )
+  return bracketed.replace(BARE_TOKEN, (_m, slug: string, raw: string) => {
+    const { id, tail } = splitId(raw)
+    return linkFor(slug, id, titles) + tail
+  })
+}
+
 /** A card body after its title and citation are lifted out: no empty bold where a bolded link was, no leading separator, no dash left dangling before punctuation or the end of a line. */
 function tidy(s: string): string {
   return s

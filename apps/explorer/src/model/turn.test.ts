@@ -158,6 +158,33 @@ test('sources: a citation that is its own link text is titled from the answer, e
   assert.equal(known.get('/corpus/olc/50'), 'Section 706')
 })
 
+test('sources: a bracketed or naked citation the worker made no handoff for is still a source, titled from the trail else slug/id', () => {
+  const events: ExplorerEvent[] = [
+    { type: 'phase', phase: 'research' },
+    { type: 'tool_call', step: 1, id: 'a', name: 'search_keyword', input: { query: 'third country removal', corpora: ['litigation'] } },
+    { type: 'tool_result', step: 1, id: 'a', name: 'search_keyword', ok: true, summary: 'litigation 40', cost_cents: 0, ms: 5,
+      detail: { kind: 'search', total: 40, hits: [{ corpus: 'litigation', count: 40, top: [{ id: 71906132, title: 'Ruiz v. ICE' }] }] } },
+    { type: 'cost', turn_cents: 1, conversation_cents: 1, conversation_spend: 1, cap_cents: 25, steps: 1, step_cap: 6 },
+    { type: 'text', delta: 'Ruiz v. ICE [rt://litigation/71906132] and SPLC [rt://litigation/73223865, 73223872]; see rt://olc/112. Also [Section 706](rt://olc/50).' },
+    { type: 'handoff', kind: 'document', url: '/corpus/olc/50', label: 'Section 706' },
+    { type: 'cost', turn_cents: 2, conversation_cents: 2, conversation_spend: 2, cap_cents: 25, steps: 1, step_cap: 6 },
+    { type: 'done', envelope: 'e.m', stop: 'end_turn', history: [], calls: 2 },
+  ]
+  const r = fold(newTurn(2, 'research', 'go', 'accept', 0), events)
+  const s = sourcesOf(r)
+  assert.deepEqual(
+    s.sources.map((x) => [x.title, x.path, x.read]),
+    [
+      ['Section 706', '/corpus/olc/50', false],
+      ['Ruiz v. ICE', '/corpus/litigation/71906132', false],
+      ['litigation/73223865', '/corpus/litigation/73223865', false],
+      ['litigation/73223872', '/corpus/litigation/73223872', false],
+      ['olc/112', '/corpus/olc/112', false],
+    ],
+  )
+  assert.equal(s.searchOnly, true)
+})
+
 test('the working label follows the last event; keepalives keep the previous label', () => {
   let t = newTurn(1, 'research', 'go', 'accept', 0)
   assert.equal(workingLabel(t, ''), 'researching…')

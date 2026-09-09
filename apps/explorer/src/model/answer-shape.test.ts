@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { citationsIn, detectShape, firstCitation, firstNumber, isCitationToken, splitListAnswer, titlesIn } from './answer-shape.ts'
+import { citationsIn, detectShape, firstCitation, firstNumber, isCitationToken, linkifyCitations, splitListAnswer, titlesIn } from './answer-shape.ts'
 import { cents, seconds } from './format.ts'
 import { briefJson, mergePinnedCorpora, moveCorpus, normalizeBrief, sameBrief } from './brief.ts'
 
@@ -81,6 +81,22 @@ test('a citation that is its own link text: the card is titled by the bold run, 
   assert.equal(titles.get('/corpus/olc/1466'), 'Review of STELLAR WIND')
   assert.equal(titles.has('/corpus/olc/112'), false)
   assert.equal(titlesIn(listAnswer).get('/corpus/olc/867'), 'Legal Authorities Available to the President')
+})
+
+// The narrative answer's forms on 2026-09-09: a bracketed token, several ids in one bracket, a naked token.
+test('bare citations become links, one per id, titled from the map else slug/id; real links are untouched', () => {
+  const prose = [
+    'Ruiz v. ICE (N.D. Cal.) [rt://litigation/71906132], Bonilla Alvarez v. Noem [rt://litigation/71324797].',
+    'Related: United States v. SPLC [rt://litigation/73223865, 73223872] and [rt://litigation/1, rt://olc/2].',
+    'See also rt://olc/112. The 1941 opinion, [Presidential Control](rt://olc/1425), and [rt://olc/2100](rt://olc/2100) stand.',
+  ].join('\n')
+  const titles = new Map([['/corpus/litigation/71906132', 'Ruiz v. ICE']])
+  const out = linkifyCitations(prose, titles)
+  assert.match(out, /\[Ruiz v\. ICE\]\(rt:\/\/litigation\/71906132\), Bonilla Alvarez v\. Noem \[litigation\/71324797\]\(rt:\/\/litigation\/71324797\)\./)
+  assert.match(out, /\[litigation\/73223865\]\(rt:\/\/litigation\/73223865\), \[litigation\/73223872\]\(rt:\/\/litigation\/73223872\) and \[litigation\/1\]\(rt:\/\/litigation\/1\), \[olc\/2\]\(rt:\/\/olc\/2\)\./)
+  assert.match(out, /See also \[olc\/112\]\(rt:\/\/olc\/112\)\. The 1941 opinion, \[Presidential Control\]\(rt:\/\/olc\/1425\), and \[rt:\/\/olc\/2100\]\(rt:\/\/olc\/2100\) stand\./)
+  assert.equal(citationsIn(out).length, 9)
+  assert.equal(linkifyCitations('nothing to do [here](https://x.y) or here'), 'nothing to do [here](https://x.y) or here')
 })
 
 test('prose with fewer than two items is not a list: no cards, the whole text is the lead', () => {
