@@ -6,7 +6,7 @@
  * context carries what it read before.
  */
 
-import { links, type ExplorerHandoffEvent } from '@ragtime/client'
+import { links, type ExplorerHandoffEvent } from '@lawfare/ragtime-client'
 import { citationsIn, isCitationToken, linkifyCitations, titlesIn } from './answer-shape.ts'
 import type { Turn } from './turn.ts'
 

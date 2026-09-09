@@ -1,4 +1,4 @@
-import type { ExplorerBrief } from '@ragtime/client'
+import type { ExplorerBrief } from '@lawfare/ragtime-client'
 
 import { onApp } from '../config.ts'
 import { detectShape, firstCitation, firstNumber, linkifyCitations, splitListAnswer } from '../model/answer-shape.ts'

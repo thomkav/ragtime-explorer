@@ -1,4 +1,4 @@
-import type { CorpusRegistry } from '@ragtime/client'
+import type { CorpusRegistry } from '@lawfare/ragtime-client'
 
 import { EXAMPLE_QUESTIONS } from '../model/examples.ts'
 

@@ -23,7 +23,7 @@ import type {
   ExplorerPhase,
   ExplorerStop,
   ExplorerToolResultEvent,
-} from '@ragtime/client'
+} from '@lawfare/ragtime-client'
 
 export type PromptKind =
   /** The user asked, in their own words (orient, or a research follow-up). */

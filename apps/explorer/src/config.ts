@@ -1,4 +1,4 @@
-import { DEFAULT_WORKER_URL } from '@ragtime/client'
+import { DEFAULT_WORKER_URL } from '@lawfare/ragtime-client'
 
 export const DEFAULT_APP_URL = 'https://ragtime.lawfaremedia.org'
 

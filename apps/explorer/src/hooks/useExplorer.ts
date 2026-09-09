@@ -18,7 +18,7 @@ import {
   type ExplorerMessage,
   type ExplorerPhase,
   type ExplorerTurnRequest,
-} from '@ragtime/client'
+} from '@lawfare/ragtime-client'
 
 import type { Settings } from '../config.ts'
 import { mergePinnedCorpora, normalizeBrief } from '../model/brief.ts'

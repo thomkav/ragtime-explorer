@@ -1,4 +1,4 @@
-import { links, type ExplorerToolDetail } from '@ragtime/client'
+import { links, type ExplorerToolDetail } from '@lawfare/ragtime-client'
 
 import { onApp } from '../config.ts'
 import { cents, plural, seconds, toolLabel } from '../model/format.ts'

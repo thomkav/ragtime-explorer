@@ -1,5 +1,5 @@
 /**
- * @ragtime/client — the one owner of the connection to the RAGtime worker
+ * @lawfare/ragtime-client — the one owner of the connection to the RAGtime worker
  * for the browser UXs (the public frontend, Explorer, whatever comes next).
  *
  *   createClient({ baseUrl, auth })
