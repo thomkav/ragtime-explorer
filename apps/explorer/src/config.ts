@@ -11,6 +11,17 @@ export type Settings = {
   password: string
 }
 
+/**
+ * A mount that adds the credential on its own side, named at build time. Empty is the
+ * page's own model: a visitor pastes the password and the tab keeps it. Set, the page
+ * holds no credential at all and every turn goes here instead of to the worker — which
+ * is what a deployment behind a gate that already knows the reader wants (`model/hop.ts`).
+ */
+export const TURN_URL = ((import.meta.env.VITE_TURN_URL as string | undefined) || '').trim()
+
+/** Whether a hop holds the credential, which is the one thing that decides. */
+export const HOSTED = TURN_URL !== ''
+
 const KEY = 'ragtime-explorer.settings'
 
 const defaults: Settings = {

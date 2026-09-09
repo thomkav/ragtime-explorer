@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { loadSettings, saveSettings, type Settings as SettingsValue } from './config.ts'
+import { HOSTED, loadSettings, saveSettings, type Settings as SettingsValue } from './config.ts'
 import { useExplorer } from './hooks/useExplorer.ts'
 import { BriefCard } from './components/BriefCard.tsx'
 import { Composer } from './components/Composer.tsx'
@@ -15,6 +15,9 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const x = useExplorer(settings)
+  // Behind a hop the credential is the mount's, so the page asks for nothing and the
+  // composer is never held shut waiting for a password nobody here has to type.
+  const needsPassword = !HOSTED && !settings.password
 
   // A one-second clock for the running turn's elapsed time; idle otherwise.
   useEffect(() => {
@@ -26,8 +29,8 @@ export default function App() {
     if (!x.busy) setNow(Date.now())
   }, [x.busy, x.turns.length])
   useEffect(() => {
-    if (!settings.password) setSettingsOpen(true)
-  }, [settings.password])
+    if (needsPassword) setSettingsOpen(true)
+  }, [needsPassword])
 
   const placeholder = x.awaitingReply
     ? 'Reply to the question'
@@ -49,7 +52,7 @@ export default function App() {
           </span>
         )}
         <button type="button" className="secondary" onClick={() => setSettingsOpen(true)}>
-          Settings{!settings.password && ' · password needed'}
+          Settings{needsPassword && ' · password needed'}
         </button>
         <button type="button" className="secondary" onClick={x.startOver} disabled={!x.turns.length}>
           Start over
@@ -65,7 +68,7 @@ export default function App() {
           )}
           <div className="scroll">
             {x.turns.length === 0 ? (
-              <EmptyState registry={x.registry} pinned={x.pinned} disabled={x.busy || !settings.password} onAsk={x.ask} onTogglePin={x.togglePin} />
+              <EmptyState registry={x.registry} pinned={x.pinned} disabled={x.busy || needsPassword} onAsk={x.ask} onTogglePin={x.togglePin} />
             ) : (
               <Conversation
                 turns={x.turns}
@@ -81,7 +84,7 @@ export default function App() {
           </div>
           <Composer
             placeholder={placeholder}
-            disabled={x.busy || !settings.password || (x.phase === 'orient' && !!x.proposed && !x.awaitingReply)}
+            disabled={x.busy || needsPassword || (x.phase === 'orient' && !!x.proposed && !x.awaitingReply)}
             focusKey={x.turns.filter((t) => t.question).length}
             onSend={x.ask}
           />
