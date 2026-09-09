@@ -75,14 +75,58 @@ export type ExplorerToolCallEvent = {
   name: string
   input: Record<string, unknown>
 }
+/** One corpus's share of a search result: how many hits, and the first few by title. */
+export type ExplorerToolHit = {
+  corpus: string
+  count: number
+  /** Up to three, in result order. `id` is what `links.document` takes. */
+  top: { id: string | number | null; title: string | null }[]
+}
+
+/**
+ * What a tool result amounts to, structured per tool family (design item 5
+ * on ragtime-dev#168; contract §9 row 9). A sibling of the one-line
+ * `summary`, which the worker renders from this same object. Absent on a
+ * failed result.
+ */
+export type ExplorerToolDetail =
+  /** search_keyword, probe, search_semantic, filter_corpus, find_similar: every corpus searched, zero hits or not. */
+  | { kind: 'search'; hits: ExplorerToolHit[]; total: number }
+  /** fetch_documents: a title per id; `chars` is what the model was given to read (full mode). */
+  | {
+      kind: 'documents'
+      corpus: string | null
+      mode: 'metadata' | 'full'
+      count: number
+      documents: { id: string | number | null; title: string | null; chars?: number; error?: string }[]
+    }
+  /** get_facets: the filter vocabulary and the corpus's size. */
+  | {
+      kind: 'facets'
+      corpus: string | null
+      field_count: number
+      fields: string[]
+      document_count: number | null
+      /** Each facet group the route returned and how many values it has. */
+      facets: { name: string; values: number }[]
+    }
+  /** ask_corpus: a billed plan awaiting execute. */
+  | { kind: 'plan'; queries: number; estimated_cost_cents: number; has_token: boolean }
+  /** ask_corpus_execute, ask_hub_execute, summarize_document: a billed synthesis. */
+  | { kind: 'answer'; chars: number; citations: number; candor: number; cost_cents: number }
+  /** Anything else, or a result that was not JSON. */
+  | { kind: 'text'; chars: number }
+
 export type ExplorerToolResultEvent = {
   type: 'tool_result'
   step: number
   id: string
   name: string
   ok: boolean
-  /** One line the trail can render: per-corpus hit counts for searches, a count, or a prefix of the text. */
+  /** One line the trail can render: per-corpus hit counts for searches, titles for fetches, field count for facets. */
   summary: string
+  /** The structured sibling of `summary`; present when `ok`. A worker deployed before the field omits it. */
+  detail?: ExplorerToolDetail
   corpus?: string
   /** Up to 50 result ids, when the result was for one corpus. */
   ids?: (string | number)[]

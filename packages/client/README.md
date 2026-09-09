@@ -73,9 +73,20 @@ EXPLORER_BASE=https://ragtimeproxy.benjamin-wittes.workers.dev EXPLORER_LIVE=1 �
 Node 22.18+ runs the TypeScript tests directly (type stripping); the sources use only
 erasable syntax so the same files build with `tsc` to `dist/` for consumers.
 
-Item 5 of the design answers on ragtime-dev#168 (2026-09-08) adds structured per-tool
-summaries beside the one-line `summary` on `tool_result`; the worker change lands first and
-the `ExplorerToolResultEvent` type grows a sibling field with it.
+`tool_result` carries `detail` beside the one-line `summary` (item 5 of the design answers
+on ragtime-dev#168, contract §9 row 9): `ExplorerToolDetail`, one variant per tool family —
+`search` (a hit count per corpus, zero or not, with the top titles), `documents` (a title per
+fetched id, text length in full mode), `facets` (field count, document count, facet groups),
+`plan`, `answer`, or `text`. The worker renders `summary` from the same object. The field is
+optional in the type because a worker deployed before it omits it and a failed result never
+has one.
+
+## Resolving the package inside this repo
+
+`exports` points consumers at `dist/`. Inside the monorepo the `development` export
+condition points at `src/` instead, so Vite's dev server (which asks for that condition) and
+`node --conditions=development --test` both run the sources without a build step; `vite build`
+and any outside consumer read `dist/`, which `npm run build` at the root emits first.
 
 ## Contract
 
