@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { Settings as SettingsValue } from '../config.ts'
+import { HOSTED, type Settings as SettingsValue } from '../config.ts'
 
 type Props = {
   open: boolean
@@ -32,11 +32,15 @@ export function Settings({ open, value, onSave, onClose }: Props) {
         }}
       >
         <h3>Settings</h3>
-        <label className="field">
-          <span className="label">Explorer password</span>
-          <input type="password" value={draft.password} onChange={(e) => setDraft({ ...draft, password: e.target.value })} placeholder="paste once" autoComplete="off" />
-          <span className="hint">Kept in this tab only. Sixty model calls a day per network without it.</span>
-        </label>
+        {HOSTED ? (
+          <p className="hint">This Explorer is served behind a sign-in, and the credential is the server's — there is nothing to paste.</p>
+        ) : (
+          <label className="field">
+            <span className="label">Explorer password</span>
+            <input type="password" value={draft.password} onChange={(e) => setDraft({ ...draft, password: e.target.value })} placeholder="paste once" autoComplete="off" />
+            <span className="hint">Kept in this tab only. Sixty model calls a day per network without it.</span>
+          </label>
+        )}
         <label className="field">
           <span className="label">Worker</span>
           <input value={draft.workerUrl} onChange={(e) => setDraft({ ...draft, workerUrl: e.target.value })} spellCheck={false} />

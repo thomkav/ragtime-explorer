@@ -17,6 +17,28 @@ defaults to production and the links to https://ragtime.lawfaremedia.org; a loca
 `wrangler dev` is http://127.0.0.1:8787. `VITE_WORKER_URL` and `VITE_APP_URL` set the
 defaults at build time.
 
+## Served behind a gate, where the credential is the server's
+
+`VITE_TURN_URL` names a mount that adds the credential on its own side. Set it and the
+page holds none: the Settings dialog offers no password field, nothing is kept in the
+tab, and every turn goes to that mount instead of to the worker. Unset — the default —
+nothing changes and a visitor pastes the password as before.
+
+```sh
+VITE_BASE=/ragtime/explorer/ VITE_TURN_URL=/ragtime/explorer/turn \
+  npm run build -w ragtime-explorer-app
+```
+
+It is for a deployment already behind a sign-in, where asking a member to paste a shared
+password says nothing the sign-in did not. What the mount owes in return is the rule this
+side keeps: it refuses a body that carries a credential, resolves its own, and streams the
+worker's reply back unchanged. Anyone the gate admits then spends the shared demo
+allowance, which is the trade the gate is making.
+
+`model/hop.ts` is the whole of it on this side. The package's `explorer.turn` builds the
+credential into the body, so it cannot be the caller; the hop sends the turn itself and
+reads the reply with the package's own parser.
+
 ## The first shape, and where each decision lives
 
 The fifteen answers on [ragtime-dev#168](https://github.com/benjaminwittes/ragtime-dev/issues/168)

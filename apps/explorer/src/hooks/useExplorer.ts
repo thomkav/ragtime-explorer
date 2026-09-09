@@ -20,8 +20,9 @@ import {
   type ExplorerTurnRequest,
 } from '@lawfare/ragtime-client'
 
-import type { Settings } from '../config.ts'
+import { HOSTED, TURN_URL, type Settings } from '../config.ts'
 import { mergePinnedCorpora, normalizeBrief } from '../model/brief.ts'
+import { hopTurn } from '../model/hop.ts'
 import { applyEvent, newTurn, type PromptKind, type Turn } from '../model/turn.ts'
 
 export type Refusal = { status: number; code: string | null; message: string }
@@ -89,7 +90,7 @@ export function useExplorer(settings: Settings): Explorer {
 
   const run = useCallback(
     async (turnPhase: ExplorerPhase, prompt: string, promptKind: PromptKind, briefToUse: ExplorerBrief | null) => {
-      if (!settings.password) {
+      if (!HOSTED && !settings.password) {
         setRefusal({ status: 0, code: 'no_credential', message: 'Paste the Explorer password in Settings first.' })
         return
       }
@@ -108,8 +109,11 @@ export function useExplorer(settings: Settings): Explorer {
       if (turnPhase === 'research' && briefToUse) req.brief = briefToUse
       const ac = new AbortController()
       abort.current = ac
+      // Behind a hop the page holds no credential and the turn goes to the mount, which
+      // adds one; otherwise the package sends it to the worker with the pasted password.
+      const events = HOSTED ? hopTurn(TURN_URL, req, { signal: ac.signal }) : client.explorer.turn(req, auth, { signal: ac.signal })
       try {
-        for await (const ev of client.explorer.turn(req, auth, { signal: ac.signal })) {
+        for await (const ev of events) {
           commit(applyEvent(turn, ev, Date.now()))
           if (ev.type === 'phase' && ev.outcome === 'brief' && ev.brief) setProposed(mergePinnedCorpora(ev.brief, pinnedRef.current))
           if (ev.type === 'done') {
