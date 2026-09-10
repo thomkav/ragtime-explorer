@@ -138,8 +138,8 @@ export function useExplorer(settings: Settings): Explorer {
             ? { status: err.status, code: err.code, message: err.message }
             : { status: 0, code: 'network', message: err instanceof Error ? err.message : String(err) }
         // Rewritten once, here, so the header and the turn's own error block say the same
-        // thing — and so a quota refusal behind a mount does not tell a member who is
-        // already signed in to sign in (`model/allowance.ts`).
+        // thing — and so a quota refusal behind a mount does not tell a reader who is
+        // already through its gate to go and sign in (`model/allowance.ts`).
         const r: Refusal = { ...raw, message: explainRefusal(raw.code, raw.message, HOSTED) }
         setRefusal(r)
         commit({

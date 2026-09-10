@@ -2,9 +2,9 @@
  * A turn sent through a hop, which adds the credential on its own side.
  *
  * The page's own model is that a visitor pastes the Explorer password and the tab keeps
- * it (`config.ts`). Where the Explorer is served behind a gate that already knows the
- * reader — a member-gated mount on a tenant — pasting a shared password again says
- * nothing the gate did not, so the mount holds the credential and the page holds none.
+ * it (`config.ts`). Where the Explorer is served behind a gate that already decided who
+ * may be here — a code-gated mount on a tenant — pasting a second shared secret says
+ * nothing the first one did not, so the mount holds the credential and the page holds none.
  * `VITE_TURN_URL` names that mount at build time and is the whole switch: unset, the page
  * behaves exactly as it did.
  *

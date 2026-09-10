@@ -48,7 +48,7 @@ test('behind a gate the pool is shared; on the page own model it is the network'
   const shared = allowance({ cost: cost({ ip_calls: 5, ip_cap: 60 }), fallbackCap: 60, shared: true })
   const own = allowance({ cost: cost({ ip_calls: 5, ip_cap: 60 }), fallbackCap: 60, shared: false })
   assert.match(allowanceLine(shared), /^Shared allowance/)
-  assert.match(allowanceNote(shared, 5), /Everyone signed in draws on this one pool/)
+  assert.match(allowanceNote(shared, 5), /Everyone with the access code draws on this one pool/)
   assert.match(allowanceLine(own), /^Daily allowance/)
   assert.match(allowanceNote(own, 5), /this network/i)
 })
@@ -84,7 +84,7 @@ test('the bar never runs past full', () => {
 const WORKER_QUOTA_REFUSAL =
   'Daily Explorer allowance for this network reached (60 model calls). Sign in to continue, or try again tomorrow.'
 
-test('behind a gate a quota refusal stops telling a signed-in member to sign in', () => {
+test('behind a gate a quota refusal stops telling a reader already through it to sign in', () => {
   const shown = explainRefusal('ip_quota', WORKER_QUOTA_REFUSAL, true)
   assert.doesNotMatch(shown, /[Ss]ign in to continue/)
   assert.match(shown, /shared allowance is used up/)

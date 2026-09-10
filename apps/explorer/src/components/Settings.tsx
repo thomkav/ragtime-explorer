@@ -34,7 +34,7 @@ export function Settings({ open, value, onSave, onClose }: Props) {
         <h3>Settings</h3>
         {HOSTED ? (
           <p className="hint">
-            This Explorer is served behind a sign-in, and the credential is the server's — there is nothing to paste. Every turn goes to the
+            This Explorer is served behind an access code, and the credential is the server's — there is nothing to paste. Every turn goes to the
             server, which spends the shared daily allowance shown beside the trail.
           </p>
         ) : (

@@ -29,8 +29,9 @@ VITE_BASE=/ragtime/explorer/ VITE_TURN_URL=/ragtime/explorer/turn \
   npm run build -w ragtime-explorer-app
 ```
 
-It is for a deployment already behind a sign-in, where asking a member to paste a shared
-password says nothing the sign-in did not. What the mount owes in return is the rule this
+It is for a deployment already behind its own gate — an access code, a sign-in, whatever
+the mount uses — where asking a reader to paste a second shared secret says nothing the
+first one did not. What the mount owes in return is the rule this
 side keeps: it refuses a body that carries a credential, resolves its own, and streams the
 worker's reply back unchanged. Anyone the gate admits then spends the shared demo
 allowance, which is the trade the gate is making.
@@ -92,7 +93,7 @@ found by reading the code and then by looking at the screen on a phone.
 |---|---|
 | Settings rendered an editable **Worker** field that reaches nothing when a mount holds the credential: the hop is the only caller, so a member could type in it, press Save, and change nothing | `components/Settings.tsx` — the field is the page's own model only |
 | Nothing said the daily allowance is **shared**. The Meter reports this conversation's spend against its 25¢ cap; the pool the worker counts per address per day was invisible, and behind a mount that address is the mount's — so everyone the gate admits draws on one pool and the first signal was a refusal | `model/allowance.ts`, `components/Allowance.tsx`; the Meter's line now names the conversation |
-| A quota refusal told a signed-in member to *sign in to continue* — the worker's words for a visitor on the public site, and advice that would change nothing here | `model/allowance.ts` (`explainRefusal`), rewritten once in `hooks/useExplorer.ts` so the header and the turn's error block agree |
+| A quota refusal told a reader already through the mount's gate to *sign in to continue* — the worker's words for a visitor on the public site, and advice that would change nothing here | `model/allowance.ts` (`explainRefusal`), rewritten once in `hooks/useExplorer.ts` so the header and the turn's error block agree |
 | No way back: a full-page app inside a tenant, with the browser's Back button as the only exit | `model/home.ts`, `HOME_URL` in `config.ts` — the mount's own `VITE_BASE` says where the page was linked from; `VITE_HOME_URL` overrides |
 | One breakpoint, and under it a 390×844 phone got about **65px** of scrollable answer: the aside was pinned at 40vh and the accepted brief hangs above the conversation rather than scrolling with it | the `@media` block at the end of `styles.css` (last, deliberately); the aside now takes the height its content needs, and the panels that cost the answer its room start closed — everywhere, see below |
 

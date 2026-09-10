@@ -74,10 +74,10 @@ export function allowanceNote(a: Allowance, conversationCalls: number): string {
   const resets = 'It resets at 00:00 UTC.'
   if (a.spent) {
     return a.shared
-      ? 'Everyone signed in draws on this one pool, and it is spent. ' + resets
+      ? 'Everyone with the access code draws on this one pool, and it is spent. ' + resets
       : 'This network has spent its allowance. ' + resets
   }
-  const who = a.shared ? 'Everyone signed in draws on this one pool.' : 'It covers this network, not this tab.'
+  const who = a.shared ? 'Everyone with the access code draws on this one pool.' : 'It covers this network, not this tab.'
   if (a.live) return who + ' ' + resets
   const mine = conversationCalls > 0 ? ' This conversation has spent ' + conversationCalls + '.' : ''
   return who + mine + ' ' + resets
@@ -88,14 +88,16 @@ export function allowanceNote(a: Allowance, conversationCalls: number): string {
  *
  * The worker writes its quota refusal for the caller it usually has — a visitor on the
  * public site — and tells them to *sign in to continue*. Behind a mount that holds the
- * credential the reader already signed in, and doing it again would change nothing: the
- * allowance belongs to the mount, not to them. So the page, which is the only party that
- * knows which of the two it is, says it instead of passing the worker's advice through.
+ * credential the reader is already through the mount's own gate, which is an access code
+ * rather than an account, so there is no sign-in to do and it would change nothing if
+ * there were: the allowance belongs to the mount, not to them. So the page, which is the
+ * only party that knows which of the two it is, says it instead of passing the worker's
+ * advice through.
  * Any other refusal is the worker's own words, unchanged.
  */
 export function explainRefusal(code: string | null, message: string, shared: boolean): string {
   if (!shared || !code || !QUOTA_CODES.has(code)) return message
-  return "Today's shared allowance is used up. Everyone signed in draws on one pool of model calls; it resets at 00:00 UTC."
+  return "Today's shared allowance is used up. Everyone with the access code draws on one pool of model calls; it resets at 00:00 UTC."
 }
 
 function shareWord(a: Allowance): string {

@@ -1,7 +1,7 @@
 /**
  * Pointing at something on the page and saying what is wrong with it.
  *
- * The Explorer sits behind a member gate on a tenant that already runs a feedback spine,
+ * The Explorer sits behind a gate on a tenant that already runs a feedback spine,
  * so a note has somewhere honest to go: one POST to the tenant's capture route, filed
  * against the engagement's own feedback, triaged by a person. It is not a message to the
  * model and it does not join the conversation — a reader telling us the trail is confusing
