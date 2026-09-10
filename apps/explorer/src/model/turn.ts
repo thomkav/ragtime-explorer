@@ -233,6 +233,29 @@ export function toolCalls(turns: Turn[]): number {
   return n
 }
 
+/**
+ * The line that stands where an accepted brief starts research, for the turn at `i`.
+ *
+ * A second acceptance can only come from the pinned bar's Edit affordance — `BriefCard`
+ * holds its button shut until the draft differs — so any marker after the first is a
+ * *changed* brief, and it has to say so: the pinned bar above now carries the new goal,
+ * and a reader told only "research started with the brief" is left to spot the
+ * difference between two bars that read alike.
+ *
+ * The second sentence is gated separately on an answer having arrived, because it is a
+ * claim about the page rather than about the brief: `hooks/useExplorer.ts` clears the
+ * message history only on Start over, so earlier answers survive an edit — but a restart
+ * after a turn that produced none has nothing above to still be there.
+ */
+export function acceptMarker(turns: Turn[], i: number): string {
+  const before = turns.slice(0, i)
+  if (!before.some((t) => t.promptKind === 'accept')) return 'research started with the brief'
+  const followsAnswers = before.some((t) => t.phase === 'research' && !!t.answer)
+  return followsAnswers
+    ? 'research restarted with the edited brief. The answers above are still in the conversation.'
+    : 'research restarted with the edited brief'
+}
+
 /** Whether the turn's wall clock is known. */
 export function elapsedMs(turn: Turn, now: number): number {
   return (turn.endedAt ?? now) - turn.startedAt

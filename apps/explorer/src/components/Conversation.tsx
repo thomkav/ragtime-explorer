@@ -3,7 +3,7 @@ import type { CorpusRegistry, ExplorerBrief } from '@lawfare/ragtime-client'
 
 import { normalizeBrief, sameBrief } from '../model/brief.ts'
 import { phasePill, plural, workingLabel } from '../model/format.ts'
-import type { Turn } from '../model/turn.ts'
+import { acceptMarker, type Turn } from '../model/turn.ts'
 import { Answer } from './Answer.tsx'
 import { BriefCard } from './BriefCard.tsx'
 import { Markdown } from './Markdown.tsx'
@@ -39,16 +39,11 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
         // to read back which brief an earlier phase actually ran against.
         const shownBrief = isLast && proposed ? proposed : turn.brief
         const showBrief = !!shownBrief && (!brief || !sameBrief(normalizeBrief(shownBrief), brief))
-        // Accepting an edited brief starts a new research phase but keeps the message
-        // history (`hooks/useExplorer.ts` clears it only on Start over), so from the
-        // second one on, the answers already on the page are still in play.
-        const followsAnswers = turns.slice(0, i).some((t) => t.phase === 'research' && !!t.answer)
+        // What the marker says depends on what came before it — see `acceptMarker`.
         return (
           <article key={turn.index} className={'turn turn-' + turn.phase}>
             {turn.promptKind === 'accept' ? (
-              <div className="marker">
-                research started with the brief{followsAnswers && '. You can now continue with these answers in mind.'}
-              </div>
+              <div className="marker">{acceptMarker(turns, i)}</div>
             ) : (
               <div className={'bubble user' + (turn.promptKind === 'reply' ? ' reply' : '')}>{turn.prompt}</div>
             )}
