@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 
 import { DAILY_MODEL_CALLS, HOME_LABEL, HOME_URL, HOSTED, loadSettings, saveSettings, type Settings as SettingsValue } from './config.ts'
 import { useExplorer } from './hooks/useExplorer.ts'
-import { useNarrow } from './hooks/useNarrow.ts'
 import { QUOTA_CODES, allowance } from './model/allowance.ts'
-import { conversationCost } from './model/turn.ts'
+import { plural } from './model/format.ts'
+import { conversationCost, toolCalls } from './model/turn.ts'
 import { Allowance } from './components/Allowance.tsx'
 import { BriefCard } from './components/BriefCard.tsx'
 import { Composer } from './components/Composer.tsx'
@@ -17,9 +17,12 @@ import { Trail } from './components/Trail.tsx'
 export default function App() {
   const [settings, setSettings] = useState<SettingsValue>(loadSettings)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Closed on every viewport, which is a plain default and not a breakpoint: this is the
+  // reader's own toggle, so it is component state rather than a hook reading the
+  // stylesheet's media query the way the deleted `useNarrow` had to.
+  const [trailOpen, setTrailOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const x = useExplorer(settings)
-  const narrow = useNarrow()
   // Behind a mount that holds the credential the worker counts the day's model calls
   // against the mount's address, so the allowance is one pool shared by everyone the gate
   // admits (`model/allowance.ts`). On the page's own model it is the visitor's network.
@@ -29,6 +32,7 @@ export default function App() {
     shared: HOSTED,
     refusalCode: x.refusal?.code ?? null,
   })
+  const calls = toolCalls(x.turns)
   // Behind a hop the credential is the mount's, so the page asks for nothing and the
   // composer is never held shut waiting for a password nobody here has to type.
   const needsPassword = !HOSTED && !settings.password
@@ -86,7 +90,29 @@ export default function App() {
         </button>
       </header>
 
-      <main className="main">
+      {/* The meter and the allowance are what a member must not have to go looking for,
+          so they sit across the top where they are read at a glance and cost the answer
+          no width. The trail is the page's argument that it shows its work, which is not
+          the same as the work being on the screen: closed, it is one line here saying how
+          much is behind it — the count is what makes it worth a tap. It used to keep a
+          third of a wide screen reserved and empty for the times it was opened, which is
+          rent the answer paid on every look. Open it and the rail comes back. */}
+      <div className="strip">
+        <Meter turns={x.turns} phase={x.phase} totalCalls={x.totalCalls} />
+        <Allowance value={pool} conversationCalls={x.totalCalls} />
+        <button
+          type="button"
+          className={'trail-toggle' + (trailOpen ? ' on' : '')}
+          aria-expanded={trailOpen}
+          aria-controls="trail"
+          onClick={() => setTrailOpen((open) => !open)}
+        >
+          <span aria-hidden="true">{trailOpen ? '▾' : '▸'}</span>{' '}
+          Trail{calls > 0 ? ' — ' + plural(calls, 'tool call') : ' — every tool call and what it cost'}
+        </button>
+      </div>
+
+      <main className={'main' + (trailOpen ? ' with-trail' : '')}>
         <section className="left">
           {x.brief && (
             <div className="brief-bar">
@@ -96,7 +122,7 @@ export default function App() {
                 editable={false}
                 accepted={x.brief}
                 disabled={x.busy}
-                startOpen={!narrow}
+                startOpen={false}
                 onAccept={x.accept}
               />
             </div>
@@ -124,19 +150,13 @@ export default function App() {
             onSend={x.ask}
           />
         </section>
-        <aside className="right">
-          <Meter turns={x.turns} phase={x.phase} totalCalls={x.totalCalls} />
-          <Allowance value={pool} conversationCalls={x.totalCalls} />
-          <div className="scroll">
-            {/* The meter and the allowance are what a member must not have to go looking
-                for; the trail is worth its room on a wide screen and costs the answer its
-                room on a phone, so it starts closed there. */}
-            <details className="trail-panel" open={!narrow}>
-              <summary className="trail-summary">Trail — every tool call and what it cost</summary>
+        {trailOpen && (
+          <aside className="right" id="trail">
+            <div className="scroll">
               <Trail turns={x.turns} appUrl={settings.appUrl} />
-            </details>
-          </div>
-        </aside>
+            </div>
+          </aside>
+        )}
       </main>
 
       <Settings

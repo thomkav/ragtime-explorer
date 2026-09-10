@@ -12,8 +12,8 @@ type Props = {
   /** The accepted brief, when this card shows a proposal that was accepted (possibly edited). */
   accepted?: ExplorerBrief | null
   disabled?: boolean
-  /** Whether the compact card starts expanded. False on a narrow viewport, where its
-   *  height is the answer's height. Ignored while the card is being edited. */
+  /** Whether the compact card starts expanded. False everywhere the page renders it:
+   *  its height is the answer's height. Ignored while the card is being edited. */
   startOpen?: boolean
   onAccept(brief: ExplorerBrief): void
 }
@@ -67,10 +67,11 @@ export function BriefCard({ brief, registry, editable, accepted, disabled, start
   if (!editing) {
     const shown = accepted && !editable ? accepted : brief
     // The accepted brief is pinned above the conversation rather than scrolling with it,
-    // so its height is taken straight out of the room the answer has to be read in. On a
-    // wide screen that is a few lines and worth it; on a phone the goal, the corpora, the
-    // shape and the constraints came to most of the viewport and left the answer a slit.
-    // Collapsed, the summary still says which brief research is running against.
+    // so its height is taken straight out of the room the answer has to be read in — a
+    // few lines on a wide screen, most of the viewport on a phone. Either way it is
+    // settled state: the reader accepted it and now wants what it produced. Collapsed,
+    // the summary still says which brief research is running against, and the corpora,
+    // the shape and the constraints are a tap away.
     return (
       <details className="brief brief-compact" aria-label="Research brief" open={startOpen}>
         <summary className="brief-summary">
