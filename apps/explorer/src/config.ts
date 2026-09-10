@@ -44,6 +44,15 @@ export const HOME_URL =
   ((import.meta.env.VITE_HOME_URL as string | undefined) || '').trim() ||
   (HOSTED ? parentPath((import.meta.env.BASE_URL as string | undefined) || '/') : '')
 
+/**
+ * Where a note about this page goes (`model/point.ts`), named at build time. Empty — the
+ * default, and always true of the page's own model — draws no widget at all: a page
+ * nobody mounted behind a gate has nowhere honest to file one, and a button that fails is
+ * worse than no button. The mount sets it to its own tenant's capture route, so the post
+ * is same-origin and carries no credential.
+ */
+export const POINT_URL = ((import.meta.env.VITE_POINT_URL as string | undefined) || '').trim()
+
 export const HOME_LABEL = ((import.meta.env.VITE_HOME_LABEL as string | undefined) || '').trim() || 'RAGtime'
 
 const KEY = 'ragtime-explorer.settings'

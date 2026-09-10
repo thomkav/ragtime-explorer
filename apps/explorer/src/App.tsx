@@ -11,6 +11,7 @@ import { Composer } from './components/Composer.tsx'
 import { Conversation } from './components/Conversation.tsx'
 import { EmptyState } from './components/EmptyState.tsx'
 import { Meter } from './components/Meter.tsx'
+import { Point } from './components/Point.tsx'
 import { Settings } from './components/Settings.tsx'
 import { Trail } from './components/Trail.tsx'
 
@@ -158,6 +159,8 @@ export default function App() {
           </aside>
         )}
       </main>
+
+      <Point />
 
       <Settings
         open={settingsOpen}
