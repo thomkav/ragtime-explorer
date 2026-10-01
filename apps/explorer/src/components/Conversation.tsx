@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CorpusRegistry, ExplorerBrief } from '@lawfare/ragtime-client'
 
 import { normalizeBrief, sameBrief } from '../model/brief.ts'
 import { phasePill, plural, workingLabel } from '../model/format.ts'
+import { knownTitles } from '../model/sources.ts'
 import { acceptMarker, type Turn } from '../model/turn.ts'
 import { Answer } from './Answer.tsx'
 import { BriefCard } from './BriefCard.tsx'
+import { LiveText } from './LiveText.tsx'
 import { Markdown } from './Markdown.tsx'
 
 type Props = {
@@ -22,6 +24,11 @@ type Props = {
 export function Conversation({ turns, brief, proposed, registry, appUrl, now, busy, onAccept }: Props) {
   const end = useRef<HTMLDivElement>(null)
   const lastLabel = useRef('')
+  // A research turn is written live by the mark (see LiveText) and swaps to the shaped
+  // Answer once the last letter has settled. Turns that never streamed here (history) go straight to it.
+  const streamed = useRef(new Set<number>())
+  const [settled, setSettled] = useState<ReadonlySet<number>>(new Set())
+  const settle = useCallback((index: number) => setSettled((s) => (s.has(index) ? s : new Set(s).add(index))), [])
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'end' })
   }, [turns])
@@ -32,6 +39,8 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
         const isLast = i === turns.length - 1
         const label = turn.running ? workingLabel(turn, lastLabel.current) : ''
         if (turn.running) lastLabel.current = label
+        if (turn.running && turn.phase === 'research') streamed.current.add(turn.index)
+        const live = turn.phase === 'research' && (turn.running || (streamed.current.has(turn.index) && !!turn.answer && !settled.has(turn.index)))
         // The pinned bar above the conversation already says which brief research runs
         // against, so a transcript copy of the same brief is a second bar saying the same
         // thing. It earns its place only when it differs from the pinned one — a proposal
@@ -89,7 +98,20 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
               />
             )}
 
-            {turn.answer && <Answer turn={turn} priorTurns={turns.slice(0, i)} brief={brief} appUrl={appUrl} now={now} />}
+            {live && (
+              <div className="answer live-answer">
+                <LiveText
+                  text={turn.running ? turn.buffer.trimStart() : turn.answer}
+                  final={!turn.running}
+                  status="Searching the record…"
+                  appUrl={appUrl}
+                  titles={knownTitles(turn, turns.slice(0, i))}
+                  onSettled={() => settle(turn.index)}
+                />
+              </div>
+            )}
+
+            {!live && turn.answer && <Answer turn={turn} priorTurns={turns.slice(0, i)} brief={brief} appUrl={appUrl} now={now} />}
 
             {turn.error && (
               <div className="error">
@@ -98,7 +120,7 @@ export function Conversation({ turns, brief, proposed, registry, appUrl, now, bu
               </div>
             )}
 
-            {turn.running && (
+            {turn.running && !live && (
               <div className="working" aria-live="polite">
                 <span className="dot" />
                 {label || (turn.phase === 'orient' ? 'getting oriented…' : 'researching…')}
