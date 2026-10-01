@@ -130,6 +130,20 @@ button:disabled { cursor: default; opacity: 0.55; }
 /* Answer */
 .answer { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 14px 18px; margin: 10px 0; }
 .md { font: 400 17px/1.55 var(--serif); }
+/* The mark writes the answer (LiveText). The text is laid out whole and invisible, then revealed; the mark is its cursor. */
+.live { position: relative; font: 400 17px/1.55 var(--serif); }
+.live-status { color: var(--dim); font-style: italic; }
+.livetext p:last-child, .livetext ul:last-child, .livetext ol:last-child { margin-bottom: 0; }
+.live-mark { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; will-change: transform; }
+.livetext { position: relative; z-index: 1; }
+.livetext > * { margin-top: 0; }
+.livetext li:not([data-on])::marker { color: transparent; }
+.livetext p { margin: 0 0 10px; }
+.livetext h1, .livetext h2, .livetext h3 { font: 600 18px/1.3 var(--sans); margin: 12px 0 6px; }
+.livetext ul, .livetext ol { padding-left: 22px; margin: 0 0 10px; }
+.livetext table { border-collapse: collapse; font-size: 15px; }
+.livetext td, .livetext th { border: 1px solid var(--line); padding: 4px 8px; }
+.livetext code { font: 13px var(--mono); background: var(--bg); padding: 1px 4px; border-radius: 4px; }
 .md p { margin: 0 0 10px; }
 .md h1, .md h2, .md h3 { font: 600 18px/1.3 var(--sans); margin: 12px 0 6px; }
 .md ul, .md ol { padding-left: 22px; margin: 0 0 10px; }
